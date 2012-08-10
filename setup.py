@@ -46,7 +46,7 @@ setup(
     #maintainer_email='',
     url='http://www.flyingtitans.com/products/rest2py',
     description='IETF RFC media type representations.',
-    long_description=open('README.txt', encoding='ascii').read(),
+    long_description=open('README.rst', encoding='ascii').read(),
     license="Apache License, Version 2.0",    
     #scripts=[],
     #data_files=[],

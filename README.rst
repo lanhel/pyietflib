@@ -2,9 +2,9 @@
 pyietflib
 =========
 
-This is a library of packages for representing IETF RFC and STD text
-representations (e.g. vCard) as python objects. Those objects can
-read from and write to the associated text representation.
+A library that will convert IETF RFC and STD text representations
+(e.g. vCard) into python objects, and for writing those objects back
+to text representations.
 
 This allows for easy creation and interpretation of RESTful resources
 that are well defined by an IANA media type.
