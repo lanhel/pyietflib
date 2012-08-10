@@ -17,7 +17,7 @@ output text stream in accordance with RFC 6350.
 
 .. |date| date:: %Y-%m-%d %H:%M:%S %Z
 .. footer::
-    | Copyright (C) 2011 Lance Finn Helsten
-    | Licensed under Apache License, Version 2.0.
+    | Copyright (C) 2011 Lance Finn Helsten;
+    | Licensed under Apache License, Version 2.0.;
     | Document generated: |date|.
 
