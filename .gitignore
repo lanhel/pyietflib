@@ -1,4 +1,5 @@
 *.py[co]
+__pycache__
 
 # Packages
 *.egg
@@ -25,3 +26,13 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+# CLI editors
+*~
+.*.swp
+
+# MacOS X
+.DS_Store
+*.tmproj
+
+
