@@ -56,11 +56,7 @@ setup(
     ],
     #package_dir={'' : 'src'},
     package_data = {
-#        'rest2py': ['locale/*', 'help/*.css', 'headers/*.yml']
-#        'rest2py':          [],
-#        'rest2py.headers':  ['*.yml'],
-#        'rest2py.locale':   ['*.ico', '*.css', '*.xml', 'en/*.html'],
-#        'rest2py.entities': ['en/*.html']
+        'rfc5646': ['language-subtag-registry.txt']
     },
     requires=[
         "docutils (>0.8)"

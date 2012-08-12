@@ -25,5 +25,6 @@ if sys.version_info < (3, 2):
 
 
 from .rfc5646 import *
+from .registry import *
 
 

@@ -191,12 +191,12 @@ class TestLanguageTag(unittest.TestCase):
         
     def test_complex(self):
         """Make a complex language tax with all elments."""
-        tag = "en-Latn-US-abcde-abcdef-abcdefg-abcdefgh-1aaa-1901-a-e1-b-e1234567-x-1-abcd-a321bfrc"
+        tag = "en-Latn-US-1694acad-1994-baku1926-1aaa-a-e1-b-e1234567-x-1-abcd-a321bfrc"
         x = LanguageTag(tag)
         self.assertEqual("en", x.language)
         self.assertEqual("Latn", x.script)
         self.assertEqual("US", x.region)
-        self.assertEqual(['abcde', 'abcdef', 'abcdefg', 'abcdefgh', '1aaa', '1901'], x.variants)
+        self.assertEqual(['1694acad', '1994', 'baku1926', '1aaa'], x.variants)
         self.assertEqual(['a-e1', 'b-e1234567'], x.extensions)
         self.assertEqual(["1", "abcd", "a321bfrc"], x.privateuse)
         self.assertEqual(tag, str(x))

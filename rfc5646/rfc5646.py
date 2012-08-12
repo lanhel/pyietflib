@@ -25,10 +25,9 @@ import logging
 import string
 import re
 
-from .codevalidation import *
+from .registry import registry
 
 __all__ = ['LanguageTag']
-__log__ = logging.getLogger(__name__)
 
 langtag = re.compile(r'''^
     (?P<language>
@@ -206,9 +205,9 @@ class LanguageTag():
         if not value.isalpha():
             raise ValueError("Invalid language code `{0}`.".format(value))
 
-        if len(value) == 2 and valid_ISO639_1(value):
+        if len(value) == 2 and valid_language_2(value):
             self.__language = value
-        elif len(value) == 3 and valid_ISO639_2(value):
+        elif len(value) == 3 and valid_language_3(value):
             self.__language = value            
         elif len(value) == 4:
             self.__language = value
@@ -233,8 +232,12 @@ class LanguageTag():
         
         value = [str(v).lower() for v in value]
         for v in value:
-            if not (v.isalpha() and len(v) == 3):
+            rentry = registry().extlangs.get(v)
+            if not (v.isalpha() and len(v) == 3 and rentry):
                 raise ValueError("Invalid extended language code `{0}`.".format(v))
+            if self.language not in rentry.prefix:
+                raise ValueError("Extended language `{0}` cannot extend language `{1}`.".format(v, self.language))
+            
         self.__extlang = value
     
     @property
@@ -247,7 +250,7 @@ class LanguageTag():
             self.__script = None
         else:
             value = str(value).title()
-            if not (value.isalpha() and len(value) == 4):
+            if not (value.isalpha() and len(value) == 4 and valid_script(value)):
                 raise ValueError("Invalid script code `{0}`.".format(value))
             self.__script = value
     
@@ -262,10 +265,10 @@ class LanguageTag():
         else:
             value = str(value).upper()
             if len(value) == 2:
-                if not value.isalpha():
+                if not valid_region_alpha(value):
                     raise ValueError("Invalid alpha region code `{0}`.".format(value))
             elif len(value) == 3:
-                if not value.isnumeric():
+                if not valid_region_numeric(value):
                     raise ValueError("Invalid numeric region code `{0}`.".format(value))
             else:
                 raise ValueError("Invalid region code `{0}`.".format(value))
@@ -288,7 +291,7 @@ class LanguageTag():
         for v in value:
             if v[0].isnumeric() and len(v) == 4:
                 continue
-            if v.isalnum() and len(v) in range(5, 9):
+            if v.isalnum() and len(v) in range(5, 9) and valid_variant(v):
                 continue
             raise ValueError("Invalid language variant code `{0}`.".format(v))
         
@@ -342,5 +345,82 @@ class LanguageTag():
                 continue
             raise ValueError("Invalid language privateuse code `{0}`.".format(v))
         self.__privateuse = value
+
+
+###
+### Language codes
+###
+
+def valid_language_2(code):
+    """Is `code` a valid ISO 639-1 two character language code."""
+    code = str(code)
+    if len(code) != 2:
+        return False
+    return (registry().languages.get(code) != None)
+
+def valid_language_3(code):
+    """Is `code` a valid ISO 639-2 three character language code."""
+    code = str(code)
+    if len(code) != 3:
+        return False
+    if code[0] == 'q' and code[2] not in ['u', 'v', 'w', 'x', 'y', 'z']:
+        return True
+    return (registry().languages.get(code) != None)
+
+
+###
+### Script codes
+###
+
+def valid_script(code):
+    code = str(code)
+    return (registry().scripts.get(code) != None)
+
+
+###
+### Region (country) codes
+###
+
+iso3166_user = [
+    'AA', 'QM', 'QN', 'QO', 'QP', 'QQ', 'QR', 'QS', 'QT', 'QU',
+    'QV', 'QW', 'QX', 'QY', 'QZ', 'XA', 'XB', 'XC', 'XD', 'XE',
+    'XF', 'XG', 'XH', 'XI', 'XJ', 'XK', 'XL', 'XM', 'XN', 'XO', 
+    'XP', 'XQ', 'XR', 'XS', 'XT', 'XU', 'XV', 'XW', 'XX', 'XY',
+    'XZ', 'ZZ',
+]
+
+def valid_region_alpha(code):
+    """Is `code` a valid ISO 3166-1 two character region code in the
+    officially assigned or user assigned space. This will return
+    `False` if code is in exceptionally, transitionally, and
+    indeterminately reserved spaces, or is not used, or is unassigned.
+    """
+    code = str(code)
+    if len(code) != 2:
+        return False
+    if code in iso3166_user:
+        return True
+    return (registry().regions.get(code) != None)
+
+
+def valid_region_numeric(code):
+    """Is `code` a valid ISO 3166-1 three character numeric region
+    code in the officially assigned or user assigned space. This will return
+    `False` if code is in exceptionally, transitionally, and
+    indeterminately reserved spaces, or is not used, or is unassigned.
+    """
+    code = str(code)
+    if len(code) != 3:
+        return False
+    return (registry().regions.get(code) != None)
+
+
+###
+### Variant codes
+###
+
+def valid_variant(code):
+    code = str(code)
+    return (registry().variants.get(code) != None)
 
 
