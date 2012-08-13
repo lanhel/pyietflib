@@ -48,9 +48,6 @@ irregular = ["en-GB-oed",
     "i-lux", "i-mingo", "i-navajo", "i-pwn", "i-tao", "i-tay", "i-tsu",
     "sgn-BE-FR", "sgn-BE-NL", "sgn-CH-DE"]
 
-regular = ["art-lojban", "cel-gaulish", "no-bok", "no-nyn", "zh-guoyu",
-    "zh-hakka", "zh-min", "zh-min-nan", "zh-xiang"]
-
 
 class LanguageTag():
     """This will parse a `value` that conforms to the language tag
@@ -69,12 +66,17 @@ class LanguageTag():
     2. If `value` is not a `str` then it will be converted to `str`
         using `ascii` decoding.
     
+    3. Both irregular and regular grandfathered values must be created
+        with a value the grandfathered value string: it is not possible
+        to set it through properties.
+    
     Properties
     ----------
     language
         A 2 or 3 alpha character ISO 639 code, or a 4 alpha character
         reserved code, or a 5-8 alpha character registered language
-        subtag.
+        subtag. This may also be a private use value that has the
+        form `"x" 1*("-" (1*8alphanum))`.
     
     extlang
         A list of up to two 3 alpha character ISO 639 codes.
@@ -100,6 +102,7 @@ class LanguageTag():
         singleton 'x-' will be prepended.
     """
     def __init__(self, value=None, validate=True):
+        self.__type = 'normal'
         self.extlang = None
         self.script = None
         self.region = None
@@ -118,24 +121,60 @@ class LanguageTag():
             value = value.split()[0]
             value = value.decode(encoding='ascii')
         
+        if value in irregular:
+            self.__type = 'grandfathered-irregular'
+            self.__language = value         # Bypass language validation
+            
+        elif value in registry().grandfathered:
+            self.__type = 'grandfathered-regular'
+            values = self.__parse(value)
+            self.language = values[0]
+            self.extlang = values[1]
+            self.script = values[2]
+            self.region = values[3]
+            self.__variants = values[4]     # Bypass variant validation
+            self.extensions = values[5]
+            self.privateuse = values[6]
+
+        elif privateuse.match(value):
+            self.__type = 'privateuse'
+            self.__language = value         # Bypass language validation
+
+        else:
+            self.__type = 'normal'
+            values = self.__parse(value)
+            self.language = values[0]
+            self.extlang = values[1]
+            self.script = values[2]
+            self.region = values[3]
+            self.variants = values[4]
+            self.extensions = values[5]
+            self.privateuse = values[6]
+    
+    def __parse(self, value):
         mo = langtag.match(value)
         if mo:
-            self.type = 'langtag'
-            
+            language = None
+            extlang = None
+            script = None
+            variants = None
+            extensions = []
+            privateuse = None
+
             if not mo.group('extlang'):
-                self.language = mo.group('language')
+                language = mo.group('language')
             else:
                 l = mo.group('language')
                 e = mo.group('extlang')
-                self.language = l.replace(e, '')
-                self.extlang = e.strip('-').split('-')
+                language = l.replace(e, '')
+                extlang = e.strip('-').split('-')
             
-            self.script = mo.group('script')
+            script = mo.group('script')
             
-            self.region = mo.group('region')
+            region = mo.group('region')
             
             if mo.group('variants'):
-                self.variants = mo.group('variants').strip('-').split('-')
+                variants = mo.group('variants').strip('-').split('-')
 
             if mo.group('extensions'):
                 def appendpart(l, part):
@@ -143,7 +182,6 @@ class LanguageTag():
                     if part:
                         l.append(part)                
 
-                extensions = []
                 parts = mo.group('extensions').split('-')
                 part = []
                 for p in parts:
@@ -153,44 +191,39 @@ class LanguageTag():
                     else:
                         part.append(p)
                 appendpart(extensions, part)
-                self.extensions = extensions
             
             if mo.group('privateuse'):
-                self.privateuse = mo.group('privateuse').strip('-').split('-')[1:]
-
-        elif privateuse.match(value):
-            self.type = 'private'
-            self.__language = value
-        elif value in irregular or value in regular:
-            self.type = 'grandfathered'
-            self.__language = value
+                privateuse = mo.group('privateuse').strip('-').split('-')[1:]
+            
+            return language, extlang, script, region, variants, extensions, privateuse
         else:
             raise ValueError("Invalid LanguageTag `{0}`.".format(value))
-    
+
     def __eq__(self):
         return False
         
     def __str__(self):
-        if self.type == 'langtag':
-            ret = [self.language]
-            if self.extlang:
-                ret.append('-'.join(self.extlang))
-            if self.script:
-                ret.append(self.script)
-            if self.region:
-                ret.append(self.region)
-            if self.variants:
-                ret.append('-'.join(self.variants))
-            if self.extensions:
-                ret.append('-'.join(self.extensions))
-            if self.privateuse:
-                ret.append('x-' + '-'.join(self.privateuse))
-            return '-'.join(ret)
-        else:
-            return self.language
+        ret = [self.language]
+        if self.extlang:
+            ret.append('-'.join(self.extlang))
+        if self.script:
+            ret.append(self.script)
+        if self.region:
+            ret.append(self.region)
+        if self.variants:
+            ret.append('-'.join(self.variants))
+        if self.extensions:
+            ret.append('-'.join(self.extensions))
+        if self.privateuse:
+            ret.append('x-' + '-'.join(self.privateuse))
+        return '-'.join(ret)
 
     def __repr__(self):
         return "LanguageTag('{0}')".format(str(self))
+    
+    @property
+    def type(self):
+        return self.__type
     
     @property
     def language(self):
@@ -204,14 +237,21 @@ class LanguageTag():
         value = str(value).lower()
         if not value.isalpha():
             raise ValueError("Invalid language code `{0}`.".format(value))
-
-        if len(value) == 2 and valid_language_2(value):
+        
+        if value[:2] in ('x-', 'X-'):
+            self.__type = 'privateuse'
+            self.__language = value
+        elif len(value) == 2 and valid_language_2(value):
+            self.__type = 'normal'
             self.__language = value
         elif len(value) == 3 and valid_language_3(value):
+            self.__type = 'normal'
             self.__language = value            
         elif len(value) == 4:
+            self.__type = 'normal'
             self.__language = value
         elif len(value) in range(5,9):
+            self.__type = 'normal'
             self.__language = value
         else:
             raise ValueError("Invalid language code `{0}`.".format(value))
@@ -222,6 +262,9 @@ class LanguageTag():
     
     @extlang.setter
     def extlang(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `extlang` is unavailable with {0} type.".format(self.type))
+        
         if not value:
             value = []
         elif not isinstance(value, (list, tuple)):
@@ -246,6 +289,9 @@ class LanguageTag():
     
     @script.setter
     def script(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `script` is unavailable with {0} type.".format(self.type))
+
         if not value:
             self.__script = None
         else:
@@ -260,6 +306,9 @@ class LanguageTag():
     
     @region.setter
     def region(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `region` is unavailable with {0} type.".format(self.type))
+
         if not value:
             self.__region = None
         else:
@@ -280,6 +329,9 @@ class LanguageTag():
     
     @variants.setter
     def variants(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `variants` is unavailable with {0} type.".format(self.type))
+
         if not value:
             self.__variants = []
             return
@@ -305,6 +357,9 @@ class LanguageTag():
     
     @extensions.setter
     def extensions(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `extensions` is unavailable with {0} type.".format(self.type))
+
         if not value:
             self.__extensions = []
             return
@@ -332,6 +387,9 @@ class LanguageTag():
     
     @privateuse.setter
     def privateuse(self, value):
+        if self.type == 'privateuse' or self.type == 'grandfathered-irregular':
+            raise AttributeError("Setting `privateuse` is unavailable with {0} type.".format(self.type))
+
         if not value:
             self.__privateuse = []
             return

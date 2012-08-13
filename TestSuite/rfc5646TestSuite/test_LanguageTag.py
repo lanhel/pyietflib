@@ -208,5 +208,5 @@ class TestLanguageTag(unittest.TestCase):
         self.assertRaises(ValueError, LanguageTag, 'ar-a-aaa-b-bbb-a-ccc')
         self.assertRaises(ValueError, LanguageTag, 'tlh-a-b-foo')
 
-
-        
+    def test_grandfathered_regular(self):
+        x = LanguageTag('art-lojban')
