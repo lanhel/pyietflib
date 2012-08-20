@@ -25,7 +25,6 @@ import unittest
 
 from TestSuite import utils
 
-
 def test_suite():
     return unittest.defaultTestLoader.discover(os.path.dirname(__file__), pattern='test_*')
 

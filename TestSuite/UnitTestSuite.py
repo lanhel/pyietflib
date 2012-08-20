@@ -26,6 +26,8 @@ import sys
 import os
 import unittest
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 __all__ = ['UnitTestSuite']
 
 class UnitTestSuite(unittest.TestSuite):

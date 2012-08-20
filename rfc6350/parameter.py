@@ -23,15 +23,16 @@ if sys.version_info < (3, 2):
 import logging
 import string
 import re
+
 from rfc5646 import LanguageTag
 
 __all__ = ['build_parameter']
 __log__ = logging.getLogger(__name__)
 
 
-iana_token_re = re.compile(r"""[-a-zA-Z0-9]+""", flags=re.VERBOSE)
+iana_token_re = re.compile(r"""^[-a-zA-Z0-9]+$""", flags=re.VERBOSE)
 
-x_name_re = re.compile(r"""[xX]-[-a-zA-Z0-9]+""", flags=re.VERBOSE)
+x_name_re = re.compile(r"""^[xX]-[-a-zA-Z0-9]+$""", flags=re.VERBOSE)
 
 class Parameter():
     """Defines parameters that are associated with a vCard property.
@@ -57,19 +58,23 @@ class Parameter():
     
     def __str__(self):
         def escape(value):
-            if ';' in value or ':' in value:
+            if isinstance(value, int):
+                value = '{0:d}'.format(value)
+            elif isinstance(value, float):
+                value = '{0:f}'.format(value)
+                value = value.rstrip('0')
+                value = value.rstrip('.')
+            elif ';' in value or ':' in value:
                 value = '"{0}"'.format(value)
             return value
         
         ret = [';', self.name, '=']
-        if isinstance(self.value, str):
+        if isinstance(self.value, (str, int, float)):
             ret.append(escape(self.value))
-        elif isinstance(self.value, int):
-            ret.append("{0:d}".format(self.value))
-        elif isinstance(self.value, float):
-            ret.append("{0:f}".format(self.value))
         elif isinstance(self.value, list):
             ret.append(','.join([escape(v) for v in self.value]))
+        else:
+            ret.append(escape(str(self.value)))
         return ''.join(ret)
     
     def __eq__(self, o):
@@ -125,7 +130,7 @@ class Parameter():
             for v in value:
                 check_value(v)
         else:
-            check_value(v)
+            check_value(value)
         
         self.__value = value
 
@@ -273,7 +278,6 @@ class MediatypeParam(Parameter):
     
     def parse_value(self, value):
         #TODO
-        print(line, column, self.name, value)
         return value
 
     def check_value(self, value):
