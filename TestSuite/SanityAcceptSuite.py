@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""IETF RFC 5646 Language Tag Specification unit test suite."""
+"""PyIETFlib sanity acceptance test suite. This may be executed directly
+to run all of the sanity tests against the `build` directory."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,22 +21,29 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
+import sys
 import os
 import unittest
 
-from TestSuite import utils
+class SanityAcceptSuite(unittest.TestSuite):
+    """Sanity test suite."""
+    def __init__(self):
+        super().__init__()
+        tl = unittest.defaultTestLoader
+        pwd = os.path.dirname(__file__)
+        for path in os.listdir(pwd):
+            fpath = os.path.join(pwd, path)
+            ipath = os.path.join(fpath, '__init__.py')
+            if path.endswith('TestSuite') and os.path.isfile(ipath):
+                m = __import__(path)
+                for t in m.sanity_suite():
+                    self.addTest(t)
 
-def test_suite():
-    return unittest.defaultTestLoader.discover(os.path.dirname(__file__), pattern='test_*')
+if __name__ == '__main__':
+    from TestSuite import utils
 
-def smoke_suite():
-    suite = utils.smoke_suite(os.path.dirname(__file__))
-    return suite
+    utils.set_accept_level(utils.SANITY)
+    suite = SanityAcceptSuite()
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
-def sanity_suite():
-    suite = utils.sanity_suite(os.path.dirname(__file__))
-    return suite
 
-def shakedown_suite():
-    suite = utils.shakedown_suite(os.path.dirname(__file__))
-    return suite

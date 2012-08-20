@@ -40,11 +40,11 @@ class TestLanguageRegistry(unittest.TestCase):
     
     def test_read_registry(self):
         r = registry()
-        self.assertEquals('Aragonese', r.languages['an'].description)
-        self.assertEquals('Mesopotamian Arabic', r.extlangs['acm'].description)
-        self.assertEquals('Antigua and Barbuda', r.regions['AG'].description)
-        self.assertEquals('Traditional German orthography', r.variants['1901'].description)
-        self.assertEquals('English, Oxford English Dictionary spelling', r.grandfathered['en-GB-oed'].description)
-        self.assertEquals('Azerbaijani in Latin script', r.redundant['az-Latn'].description)
+        self.assertEqual('Aragonese', r.languages['an'].description)
+        self.assertEqual('Mesopotamian Arabic', r.extlangs['acm'].description)
+        self.assertEqual('Antigua and Barbuda', r.regions['AG'].description)
+        self.assertEqual('Traditional German orthography', r.variants['1901'].description)
+        self.assertEqual('English, Oxford English Dictionary spelling', r.grandfathered['en-GB-oed'].description)
+        self.assertEqual('Azerbaijani in Latin script', r.redundant['az-Latn'].description)
 
 

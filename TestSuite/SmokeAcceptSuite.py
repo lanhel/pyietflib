@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""ERChime department acceptance test."""
+"""PyIETFlib smoke acceptance test suite. This may be executed directly
+to run all of the smoke tests against the `build` directory."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -23,28 +24,25 @@ __docformat__ = "reStructuredText en"
 import sys
 import os
 import unittest
-import rest2py
 
-class accept_GET(unittest.TestSuite):
-    """Check proper response for a HTTP GET request."""
-    
-    def setUp():
-        c = [
-            (r"""^/acceptGET/(?P<orguuid>\w{8}-\w{4}-\w{4}-\w{4}-\w{12})/?$""", "accept_GET")
-        ]
-        self.srv = rest2py.server(c, globals())
-    
-    def run(self, result):
-        pass
-    
-    def tearDown():
-        pass
-    
-    @property
-    def required_headers():
-        return ()
-    
-    @rest2py.required
-    def GET(self, ctx):
-        pass
+class SmokeAcceptSuite(unittest.TestSuite):
+    """Smoke test suite."""
+    def __init__(self):
+        super().__init__()
+        tl = unittest.defaultTestLoader
+        pwd = os.path.dirname(__file__)
+        for path in os.listdir(pwd):
+            fpath = os.path.join(pwd, path)
+            ipath = os.path.join(fpath, '__init__.py')
+            if path.endswith('TestSuite') and os.path.isfile(ipath):
+                m = __import__(path)
+                for t in m.smoke_suite():
+                    self.addTest(t)
+
+if __name__ == '__main__':
+    from TestSuite import utils
+
+    utils.set_accept_level(utils.SMOKE)
+    suite = SmokeAcceptSuite()
+    unittest.TextTestRunner(verbosity=2).run(suite)
 

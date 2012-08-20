@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""ERChime Unit Test."""
+"""PyIETFlib unit test suite to do unit testing over the whole project.
+This will discover all tests that are in modules that match the name
+'test_*'."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,6 +22,24 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-from .HTTPValidation import *
-from .HTTPClient import *
+import sys
+import os
+import unittest
+
+__all__ = ['UnitTestSuite']
+
+class UnitTestSuite(unittest.TestSuite):
+    """Unit test suite."""
+    
+    def __init__(self):
+        super().__init__()
+        tl = unittest.TestLoader()
+        for test in tl.discover(os.path.dirname(__file__), pattern="test_*"):
+            self.addTest(test)
+
+
+if __name__ == '__main__':
+    suite = UnitTestSuite()
+    unittest.TextTestRunner(verbosity=2).run(suite)
+
 

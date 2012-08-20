@@ -43,27 +43,27 @@ class LanguageRegistry():
         self.grandfathered = {}
         self.redundant = {}
         
-        stream = open(path, encoding='UTF-8')
-        line = stream.readline()
-        while line and line.rstrip() != '%%':
-            name, body = line.split(':')
-            name = name.strip()
-            body = body.strip()
-            setattr(self, name, body)
+        with open(path, encoding='UTF-8') as stream:
             line = stream.readline()
+            while line and line.rstrip() != '%%':
+                name, body = line.split(':')
+                name = name.strip()
+                body = body.strip()
+                setattr(self, name, body)
+                line = stream.readline()
 
-        lines = []
-        line = stream.readline()
-        while line:
-            if line.rstrip() == '%%':
-                self.__addrecord(LanguageRegistryRecord(lines))
-                lines = []
-            elif line[0].isspace():
-                lines[-1] = lines[-1] + line.strip()
-            else:
-                lines.append(line.strip())
+            lines = []
             line = stream.readline()
-        self.__addrecord(LanguageRegistryRecord(lines))
+            while line:
+                if line.rstrip() == '%%':
+                    self.__addrecord(LanguageRegistryRecord(lines))
+                    lines = []
+                elif line[0].isspace():
+                    lines[-1] = lines[-1] + line.strip()
+                else:
+                    lines.append(line.strip())
+                line = stream.readline()
+            self.__addrecord(LanguageRegistryRecord(lines))
     
     def __addrecord(self, record):
         try:

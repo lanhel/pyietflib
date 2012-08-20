@@ -21,7 +21,6 @@ limitations under the License.
 __docformat__ = "reStructuredText en"
 
 from .TestFixture import *
-from .DatabaseFixture import *
 
 
 

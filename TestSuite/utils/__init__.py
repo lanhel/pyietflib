@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""ERChime department acceptance test."""
+"""pyietfrfc unit test suite."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,32 +20,5 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-__all__ = ["DatabaseFixture"]
-
-import sys
-import os
-import unittest
-from .TestFixture import TestFixture
-from erchime.ERChimeConfig import config
-from erchime.model import *
-
-DB_PATH = os.path.abspath('./build/acceptance/var/db/accept.db')
-
-class DatabaseFixture(TestFixture):
-    """This fixture will setup a common database structure for use in
-    acceptance testing."""
-    
-    def tearDownFixture(self):
-        if os.path.isfile(DB_PATH):
-            os.remove(DB_PATH)
-
-    def setUp(self):
-        database.init_schema()
-    
-    def tearDown(self):
-        pass
-    
-    def runTest(self):
-        pass
-        #self.assertTrue(os.path.isfile(DB_PATH))
+from .acceptlevel import *
 

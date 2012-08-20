@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""REST2py acceptance tests."""
+"""ERChime department acceptance test."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,17 +20,24 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-from .SmokeAcceptSuite import *
-from .SanityAcceptSuite import *
-from .ShakedownAcceptSuite import *
+import sys
+import os
+import unittest
 
-def load_tests(loader, tests, pattern):
-    if os.environ["REST2PY_TEST_LEVEL"] in ['smoke', 'sanity', 'shakedown']:
-        return SmokeAcceptSuite()
+from TestSuite import utils
+
+@utils.skip_unless_accept_level(utils.SMOKE)
+class accept_GET(unittest.TestCase):
+    """Check proper response for a HTTP GET request."""
+        
+    def setUp(self):
+        pass
     
-    if os.environ["REST2PY_TEST_LEVEL"] in ['sanity', 'shakedown']:
-        return SanityAcceptSuite()
+    @utils.skip_unless_accept_level(utils.SHAKEDOWN)
+    def runTest(self):
+        print("SPAM")
     
-    if os.environ["REST2PY_TEST_LEVEL"] in ['shakedown']:
-        return ShakedownAcceptSuite()
+    def tearDown(self):
+        pass
+    
 

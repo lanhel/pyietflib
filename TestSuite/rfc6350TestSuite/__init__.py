@@ -20,14 +20,24 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-from .test_Property import *
+import os
+import unittest
 
-def load_tests(loader, tests, pattern):
-    print("-------------")
-    print(globals())
-    print(__file__)
-    print(loader)
-    print(tests)
-    print(pattern)
-    print("-------------")
+from TestSuite import utils
+
+
+def test_suite():
+    return unittest.defaultTestLoader.discover(os.path.dirname(__file__), pattern='test_*')
+
+def smoke_suite():
+    suite = utils.smoke_suite(os.path.dirname(__file__))
+    return suite
+
+def sanity_suite():
+    suite = utils.sanity_suite(os.path.dirname(__file__))
+    return suite
+
+def shakedown_suite():
+    suite = utils.shakedown_suite(os.path.dirname(__file__))
+    return suite
 

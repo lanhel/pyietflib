@@ -20,12 +20,9 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-def load_tests(loader, tests, pattern):
-    print("-------------")
-    print(globals())
-    print(__file__)
-    print(loader)
-    print(tests)
-    print(pattern)
-    print("-------------")
+from .UnitTestSuite import *
+from .SmokeAcceptSuite import *
+from .SanityAcceptSuite import *
+from .ShakedownAcceptSuite import *
 
+from .utils import *

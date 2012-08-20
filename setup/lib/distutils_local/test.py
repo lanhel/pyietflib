@@ -66,7 +66,7 @@ class __TestCommand(Command):
         self.bSetup = False
         self.bTeardown = False
         self.test_type = None
-        self.pattern = None
+        self.suite_name = None
         self.coverage = False
         self.test_suite = None
         self.test_src = None
@@ -80,11 +80,11 @@ class __TestCommand(Command):
         if self.test_type is None:
             raise ValueError("test_type must be set.")
         
-        if self.pattern is None:
-            self.pattern = self.test_type + "_*.py"
+        if self.suite_name is None:
+            raise ValueError("suite_name must be set.")
         
         if self.test_src is None:
-            self.test_src = '{0}Suite'.format(self.test_type.title())
+            self.test_src = 'TestSuite'
         
         if self.build_lib is None:
             self.build_lib = os.path.join(self.build_base, 'lib')
@@ -159,8 +159,7 @@ class __TestCommand(Command):
         #Find all test suites to run
         if self.debug is None:
             self.cov.start()
-            tl = unittest.TestLoader()
-            self.suite = tl.discover(self.test_lib, pattern=self.pattern)
+            self.suite = getattr(__import__('TestSuite'), self.suite_name)()
             self.cov.stop()
         else:
             if re.match(r"^.+\.test[^.]+$", self.debug):
@@ -233,16 +232,12 @@ class test_unit(__TestCommand):
     def initialize_options(self):
         super().initialize_options()
         self.test_type = "test"
-
-    def finalize_options(self):
-        super().finalize_options()
-    
-    def run(self):
-        super().run()
+        self.suite_name = 'UnitTestSuite'
             
 
 class test_accept(__TestCommand):
     description = "Run all acceptance tests on the system."
+    
     user_options = [
         ("suite=", "s", "Run specific test suite [default: all tests]."),
         ("level=", "l", "Test suite level to run: smoke, sanity, or shakedown."),
@@ -251,21 +246,23 @@ class test_accept(__TestCommand):
         ("bSetup", None, "Add a breakpoint in setUp for debug."),
         ("bTeardown", None, "Add a breakpoint in tearDown for debug."),
     ]
-
+    
+    levels = {
+        'smoke':'SmokeAcceptSuite',
+        'sanity':'SanityAcceptSuite',
+        'shakedown':'ShakedownAcceptSuite'
+    }
+    
     def initialize_options(self):
         super().initialize_options()
-        self.level = "sanity"
         self.test_type = "accept"
+        self.level = "sanity"
 
     def finalize_options(self):
-        if self.level not in ['smoke', 'sanity', 'shakedown']:
+        if self.level not in self.levels.keys():
             raise DistutilsOptionError("Invalid test level: {0}".format(self.level))
-        os.environ["PYIETFRFC_TEST_LEVEL"] = self.level
-        self.pattern = '*AcceptSuite'
+        self.suite_name = self.levels[self.level]
         super().finalize_options()
-    
-    def run(self):
-        super().run()
 
 
 class NoCoverage():

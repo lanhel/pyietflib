@@ -21,7 +21,4 @@ limitations under the License.
 __docformat__ = "reStructuredText en"
 
 from .distutils_local import *
-from .fixtures import *
-from .unittest import *
-from .utils import *
 
