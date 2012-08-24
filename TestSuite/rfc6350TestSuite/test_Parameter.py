@@ -23,6 +23,7 @@ __docformat__ = "reStructuredText en"
 import sys
 import unittest
 
+import rfc2045
 import rfc6350
 
 class ParameterTest(unittest.TestCase):
@@ -87,42 +88,44 @@ class ParameterTest(unittest.TestCase):
     def test_type_invalid(self):
         rfc6350.build_parameter('TYPE', 'spam_eggs')
 
-    @unittest.skip("RFC2045 and RFC4288 must be implemented.")
     def test_mediatype(self):
-        p = rfc6350.build_parameter("MEDIATYPE", 'text/html')
+        p = rfc6350.build_parameter("MEDIATYPE", 'text/plain')
         self.assertEqual('MEDIATYPE', p.name)
-        self.assertEqual('text/html', p.value)
-        self.assertEqual(';MEDIATYPE=text/html', str(p))        
+        self.assertEqual(rfc2045.ContentType('text/plain'), p.value)
+        self.assertEqual(';MEDIATYPE=text/plain', str(p))        
 
-
-    @unittest.skip("Unimplemented.")
     def test_calscale(self):
         """`§ 5.8 <http://tools.ietf.org/html/rfc6350#section-5.8>`_"""
-        param_abnf = '''calscale-param = "CALSCALE=" calscale-value'''
-        value_abnf = '''calscale-value = "gregorian" / iana-token / x-name'''
-        param_name = 'CALSCALE'
+        p = rfc6350.build_parameter("CALSCALE", 'gregorian')
+        self.assertEqual('CALSCALE', p.name)
+        self.assertEqual('gregorian', p.value)
+        self.assertEqual(';CALSCALE=gregorian', str(p))
 
-
-    @unittest.skip("Unimplemented.")
     def test_sortas(self):
         """`§ 5.9 <http://tools.ietf.org/html/rfc6350#section-5.9>`_"""
-        param_abnf = '''sort-as-param = "SORT-AS=" sort-as-value'''
-        value_abnf = '''sort-as-value = param-value *("," param-value)'''
-        param_name = 'SORT-AS'
+        p = rfc6350.build_parameter("SORT-AS", 'a,b,c')
+        self.assertEqual('SORT-AS', p.name)
+        self.assertEqual(['a', 'b', 'c'], p.value)
+        self.assertEqual(';SORT-AS=a,b,c', str(p))
 
-
-    @unittest.skip("Unimplemented.")
     def test_geo(self):
         """`§ 5.10 <http://tools.ietf.org/html/rfc6350#section-5.10>`_"""
-        param_abnf = '''geo-parameter = "GEO=" DQUOTE URI DQUOTE'''
-        param_name = 'GEO'
+        p = rfc6350.build_parameter("GEO", '"http://www.flyingtitans.com"')
+        self.assertEqual('GEO', p.name)
+        self.assertEqual("http://www.flyingtitans.com", p.value)
+        self.assertEqual(';GEO="http://www.flyingtitans.com"', str(p))
 
-
-    @unittest.skip("Unimplemented.")
     def test_tz(self):
         """`§ 5.11 <http://tools.ietf.org/html/rfc6350#section-5.11>`_"""
-        param_abnf = '''tz-parameter = "TZ=" (param-value / DQUOTE URI DQUOTE)'''
-        param_name = 'TZ'
+        p = rfc6350.build_parameter("TZ", 'MST')
+        self.assertEqual('TZ', p.name)
+        self.assertEqual("MST", p.value)
+        self.assertEqual(';TZ=MST', str(p))
+
+        p = rfc6350.build_parameter("TZ", '"tz:unknown"')
+        self.assertEqual('TZ', p.name)
+        self.assertEqual("tz:unknown", p.value)
+        self.assertEqual(';TZ="tz:unknown"', str(p))
 
 
 

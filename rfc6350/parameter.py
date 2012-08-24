@@ -307,11 +307,10 @@ class CalscaleParam(Parameter):
     param_name = 'CALSCALE'
     
     def check_value(self, value):
-        if value != 'gregorian' or not x_name_re.match(value) or not iana_token_re.match(value):
-            return None
-        else:
+        if value == 'gregorian' or x_name_re.match(value) or iana_token_re.match(value):
             return value
-
+        else:
+            return None
 
 class SortAsParam(Parameter):
     """`§ 5.9 <http://tools.ietf.org/html/rfc6350#section-5.9>`_"""
