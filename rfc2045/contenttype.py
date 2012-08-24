@@ -19,11 +19,13 @@ limitations under the License.
 
 import sys
 if sys.version_info < (3, 2):
-    raise Exception("Content-Type requires Python 3.2 or higher.")
+    raise Exception("rfc2045 requires Python 3.2 or higher.")
 import locale
 import logging
 import string
 import re
+
+from .contenttype_iana import *
 
 __all__ = ['ContentType']
 
@@ -38,28 +40,20 @@ contenttag_re = re.compile(r'''^
         )*)
     $''', flags=re.ASCII|re.VERBOSE)
 
-tspecials_re = re.compile(r'''\(\)<>@,;:\/\[\]\?=''', flags=re.ASCII)
+token_re = re.compile(r'''^[-!#$%&'*+.0-9A-Z^_`a-z{|}~]+$''', flags=re.ASCII)
 
-iana_types = {
-    'text':['plain'],
-    'image':['jpeg'],
-    'audio':['basic'],
-    'video':['mpeg'],
-    'application':['octet-stream', 'postscript']
-}
-
-
-def iana_type(t):
-    """Is the given type (`t`) a discrete IANA type defined in RFC 2045?"""
-    return t in iana_types.keys()
-
-def iana_subtype(t, st):
-    """Is the given type (`st`) within (`t`) a defined subtype in
-    RFC 2045?"""
-    #TODO Build a registry that can contain all the IANA subtypes
-    return st in iana_types.get(t, [])
+quoted_re = re.compile(r'''^[!#-~]+$''', flags=re.ASCII)
 
 ietf_token_re = re.compile(r'''^[-!#$&+.0-9A-Z^_a-z]+$''', flags=re.ASCII)
+
+private_token_re = re.compile(r'''^x-[-!#$%&'*+.0-9A-Z^_`a-z{|}~]+$''', flags=re.ASCII)
+
+parameter_re = re.compile(r'''
+        \s*;\s*
+        (?P<attribute>[-!#$%&'*+.0-9A-Z^_`a-z{|}~]+)
+        \s*=\s*
+        (?P<value>([-!#$%&'*+.0-9A-Z^_`a-z{|}~]+)|("[!#-~]+"))
+    ''', flags=re.ASCII|re.VERBOSE)
 
 def ietf_type(t):
     """Is the given type (`t`) an IETF extension token defined in a
@@ -148,21 +142,18 @@ class ContentType(dict):
                 raise ValueError("Invalid Content-Type header `{0}`".format(value))
             self.type = mo.group('type')
             self.subtype = mo.group('subtype')
-            for parameter in mo.group('parameters').split(';'):
-                parameter = parameter.strip()
-                if parameter:
-                    attr, value = parameter.split('=')
-                    self[attr.strip().lower()] = value.strip().strip('"').lower()
+            
+            parameters = mo.group('parameters')
+            mo = parameter_re.search(parameters)
+            while mo:
+                attr = mo.group('attribute').lower()
+                value = mo.group('value').lower().strip('"')
+                self[attr] = value
+                mo = parameter_re.search(parameters, mo.end())
         
-        #Set any known defaults
-        if self.type == 'text' and self.subtype == 'plain':
-            if 'charset' not in self:
-                self['charset'] = 'us-ascii'
-        elif self.type == 'application' and self.subtype == 'octet-stream':
-            if 'type' not in self:
-                self['type'] = None
-            if 'padding' not in self:
-                self['padding'] = '8'
+        for k, v in iana_default_parameters(self.type, self.subtype).items():
+            if k not in self:
+                self[k] = v
     
     def __eq__(self, o):
         return (isinstance(o, type(self)) and 
@@ -171,19 +162,14 @@ class ContentType(dict):
                 dict(self) == dict(o))
         
     def __str__(self):
+        defaults = iana_default_parameters(self.type, self.subtype)
         params = ['']
         for a, v in self.items():
-            if not self.print_defaults:
-                if self.type == 'text' and self.subtype == 'plain':
-                    if a == 'charset' and v == 'us-ascii':
-                        continue
-                elif self.type == 'application' and self.subtype == 'octet-stream':
-                    if a == 'type' and v is None:
-                        continue
-                    elif a == 'padding' and v == '8':
-                        continue
-
-            if tspecials_re.search(v):
+            if not self.print_defaults and a in defaults and v == defaults[a]:
+                continue
+            if v is None:
+                continue
+            if not token_re.match(v):
                 v = '"{0}"'.format(v)
             params.append('{0}={1}'.format(a, v))
         return '{0}/{1}{2}'.format(self.type, self.subtype, ';'.join(params))
@@ -191,6 +177,16 @@ class ContentType(dict):
     def __repr__(self):
         raise NotImplementedError()
         return "ContentType('{0}')".format(str(self))
+    
+    def __setitem__(self, key, value):
+        key = str(key)
+        if not token_re.match(key):
+            raise ValueError("Invalid Content-Type parameter attribute `{0}`.".format(key))
+        if value is not None:
+            value = str(value)
+            if not quoted_re.match(value):
+                raise ValueError("Invalid Content-Type parameter value `{0}`.".format(value))
+        super().__setitem__(key, value)
     
     @property
     def type(self):
@@ -201,7 +197,7 @@ class ContentType(dict):
         v = str(value).lower()
         iana = iana_type(v)
         ietf = self.rfc4288 and ietf_type(v)
-        private = v.startswith('x-')
+        private = (private_token_re.match(v) is not None)
         if self.validate and not (iana or ietf or private):
             raise ValueError("Invalid Content-Type type value {0}.".format(value))
         self.__type = v
@@ -230,7 +226,7 @@ class ContentType(dict):
         v = str(value).lower()
         iana = iana_subtype(self.type, v)
         ietf = self.rfc4288 and ietf_subtype(self.type, v)
-        private = v.startswith('x-')
+        private = (private_token_re.match(v) is not None)
         if self.validate and not (iana or ietf or private):
             raise ValueError("Invalid Content-Type subtype value {0}.".format(value))
         self.__subtype = v

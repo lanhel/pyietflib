@@ -126,6 +126,8 @@ class TestContentType(unittest.TestCase):
         """Check that parameter values with token special characters
         are properly detected if not in quoted string."""
         x = ContentType(r'text/plain;charset="()<>@,;:\/[]?="')
+        self.assertEqual("()<>@,;:\/[]?=", x['charset'])
+        
         self.assertRaises(ValueError, ContentType, 'text/plain;charset=a(b')
         self.assertRaises(ValueError, ContentType, 'text/plain;charset=a)b')
         self.assertRaises(ValueError, ContentType, 'text/plain;charset=a<b')
