@@ -24,6 +24,7 @@ import logging
 import string
 import re
 
+from rfc2045 import ContentType
 from rfc5646 import LanguageTag
 
 __all__ = ['build_parameter']
@@ -160,6 +161,14 @@ class LanguageParam(Parameter):
         except ValueError as err:
             self.raise_invalid_value(value)
 
+    def check_value(self, value):
+        if isinstance(value, str):
+            value = LanguageTag(value)
+        elif isinstance(value, LanguageTag):
+            return value
+        else:
+            return None
+
 class ValueParam(Parameter):
     """`§ 5.2 <http://tools.ietf.org/html/rfc6350#section-5.2>`_"""
     param_abnf = '''value-param = "VALUE=" value-type'''
@@ -277,12 +286,18 @@ class MediatypeParam(Parameter):
     param_name = 'MEDIATYPE'
     
     def parse_value(self, value):
-        #TODO
-        return value
+        try:
+            return ContentType(value)
+        except ValueError as err:
+            self.raise_invalid_value(value)
 
     def check_value(self, value):
-        #TODO
-        return value
+        if isinstance(value, str):
+            value = ContentType(value)
+        elif isinstance(value, ContentType):
+            return value
+        else:
+            return None
 
 
 class CalscaleParam(Parameter):
