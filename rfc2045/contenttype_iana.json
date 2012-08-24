@@ -1,0 +1,91 @@
+[
+    "application": [
+        "octet-stream":{"defaults": {"type": , "padding": "8"}}
+    ],
+    
+    "audio": [
+        "basic": {}
+    ],
+
+    "example": [
+    ],
+
+    "image": [
+        "jpeg": {}
+    ],
+
+    "message": [
+    ],
+
+    "model": [
+    ],
+
+    "multipart": [
+    ],
+
+    "text": [
+        "1d-interleaved-parityfec":{},
+        "calendar":{},
+        "css":{},
+        "csv":{},
+        "dns":{},
+        "enriched":{},
+        "example":{},
+        "fwdred":{},
+        "html":{},
+        "jcr-cnd":{},
+        "mizar":{},
+        "n3":{},
+        "parityfec":{},
+        "plain":{"defaults":{"charset": "us-ascii"}},
+        "prs.fallenstein.rst":{},
+        "prs.lines.tag":{},
+        "raptofec":{},
+        "RED":{},
+        "rfc822-headers":{},
+        "richtext":{},
+        "rtf":{},
+        "trp-enc-aescm128":{},
+        "rtx":{},
+        "sgml":{},
+        "t140":{},
+        "tab-separated-values":{},
+        "troff":{},
+        "turtle":{},
+        "ulpfec":{},
+        "uri-list":{},
+        "vcard"::{"mandatory":{"charset": "utf-8"}},
+        "vnd.abc":{"optional":["version", "charset"]},
+        "vnd.curl":{},
+        "vnd.DMClientScript":{},
+        "vnd.dvb.subtitle":{},
+        "vnd.esmertec.theme-descriptor":{},
+        "vnd.fly":{},
+        "vnd.fmi.flxstor":{},
+        "vnd.graphviz":{},
+        "vnd.in3d.3dml":{},
+        "vnd.in3d.spot":{},
+        "vnd.IPTC.NewsML":{},
+        "vnd.IPTC.NITF":{},
+        "vnd.latex-z":{},
+        "vnd.motorola.reflx":{},
+        "vnd.ms-mediapackage":{},
+        "vnd.net2phone.commcenter.command":{},
+        "vnd.radisys.msml-basic-layout":{},
+        "vnd.si.uricatalogue":{},
+        "vnd.sun.j2me.app-descriptor":{},
+        "vnd.trolltech.linguist":{},
+        "vnd.wap.si":{},
+        "vnd.wap.sl":{},
+        "vnd.wap.wml":{},
+        "vnd.wap.wmlscript":{},
+        "xml":{},
+        "xml-external-parsed-entity":{},
+    ],
+
+    "video": [
+        "mpeg": {}
+    ]
+]
+
+
