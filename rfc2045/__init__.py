@@ -1,20 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""`vCard <http://tools.ietf.org/html/rfc6350>`_ parser to convert a
-vCard representation to a structured object of a vCard, and to create
-a vCard representation from the structured object.
-
-
-media-types
------------
-- text/vcard;version=4.0;charset=UTF-8
-- text/vcard;version=3.0;charset=UTF-8
-
-
-File Extension
---------------
-- .vcf
-- .vcard
+"""`RFC 2045 <http://tools.ietf.org/html/rfc2045>`_ Multipurpose Internet
+Mail Extensions (MIME) Part One: Format of Internet Message Bodies headers
+parsering and validation.
 """
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -36,7 +24,7 @@ import sys
 if sys.version_info < (3, 2):
     raise Exception("pyietflib requires Python 3.2 or higher.")
 
-from .vcard import *
-from .property import *
-from .parameter import *
+from .contenttype import *
+
+
 

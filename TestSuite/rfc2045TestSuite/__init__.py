@@ -1,21 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""`vCard <http://tools.ietf.org/html/rfc6350>`_ parser to convert a
-vCard representation to a structured object of a vCard, and to create
-a vCard representation from the structured object.
-
-
-media-types
------------
-- text/vcard;version=4.0;charset=UTF-8
-- text/vcard;version=3.0;charset=UTF-8
-
-
-File Extension
---------------
-- .vcf
-- .vcard
-"""
+#-----------------------------------------------------------------------------
+"""IETF RFC 2046 Language Tag Specification unit test suite."""
+__author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
 __license__ = """
@@ -31,12 +18,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+__docformat__ = "reStructuredText en"
 
-import sys
-if sys.version_info < (3, 2):
-    raise Exception("pyietflib requires Python 3.2 or higher.")
+import os
+import unittest
 
-from .vcard import *
-from .property import *
-from .parameter import *
+from TestSuite import utils
 
+def test_suite():
+    return unittest.defaultTestLoader.discover(os.path.dirname(__file__), pattern='test_*')
+
+def smoke_suite():
+    suite = utils.smoke_suite(os.path.dirname(__file__))
+    return suite
+
+def sanity_suite():
+    suite = utils.sanity_suite(os.path.dirname(__file__))
+    return suite
+
+def shakedown_suite():
+    suite = utils.shakedown_suite(os.path.dirname(__file__))
+    return suite

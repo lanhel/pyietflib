@@ -21,10 +21,10 @@ limitations under the License.
 
 import sys
 if sys.version_info < (3, 2):
-    raise Exception("pyvcard requires Python 3.2 or higher.")
+    raise Exception("pyietflib requires Python 3.2 or higher.")
 
 
-from .rfc5646 import *
+from .languagetag import *
 from .registry import *
 
 
