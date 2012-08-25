@@ -104,10 +104,10 @@ class ParameterTest(unittest.TestCase):
 
     def test_sortas(self):
         """`§ 5.9 <http://tools.ietf.org/html/rfc6350#section-5.9>`_"""
-        p = rfc6350.build_parameter("SORT-AS", 'a,b,c')
+        p = rfc6350.build_parameter("SORT-AS", 'a,b,c,"special;case"')
         self.assertEqual('SORT-AS', p.name)
-        self.assertEqual(['a', 'b', 'c'], p.value)
-        self.assertEqual(';SORT-AS=a,b,c', str(p))
+        self.assertEqual(['a', 'b', 'c', 'special;case'], p.value)
+        self.assertEqual(';SORT-AS=a,b,c,"special;case"', str(p))
 
     def test_geo(self):
         """`§ 5.10 <http://tools.ietf.org/html/rfc6350#section-5.10>`_"""
