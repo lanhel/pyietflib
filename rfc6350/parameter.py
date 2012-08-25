@@ -25,6 +25,7 @@ import string
 import re
 
 from rfc2045 import ContentType
+import rfc5870
 from rfc5646 import LanguageTag
 
 __all__ = ['build_parameter']
@@ -123,7 +124,7 @@ class Parameter():
                 ValueError("Nested iterables are not allowed parameter values {0}.", value)
         
         value = self.check_value(value)
-        if not value:
+        if value is None:
             self.raise_invalid_value(value)
 
         if isinstance(value, (list, tuple)):
@@ -328,7 +329,15 @@ class GeoParam(Parameter):
     param_name = 'GEO'
     
     def parse_value(self, value):
-        return value.strip('"')
+        return rfc5870.geo_uri(value.strip('"'))
+
+    def check_value(self, value):
+        if isinstance(value, str):
+            value = rfc5870.geo_uri(value)
+        elif isinstance(value, rfc5870.geouri.GeoURI):
+            return value
+        else:
+            return None
 
 
 class TzParam(Parameter):

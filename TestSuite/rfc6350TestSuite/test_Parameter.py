@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""IETF RFC 5870 A Uniform Resource Identifier for Geographic Locations
-('geo' URI) unit test."""
+"""RFC6350 Unit Test."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -24,164 +23,110 @@ __docformat__ = "reStructuredText en"
 import sys
 import unittest
 
-from rfc5870 import *
+import rfc2045
+import rfc5870
+import rfc6350
 
-class GeoSchemeTest(unittest.TestCase):
+class ParameterTest(unittest.TestCase):
 
-    def test_default_crs(self):
-        """Testing geo_uri sets the default crs to WGS-84."""
-        x = geo_uri("geo:0,0,0;a=1;b=2;c=ab%2dcd")
-        x = geo_uri("geo:0,0,0")
-        self.assertEqual('wgs84', x.crs)
-        self.assertTrue(isinstance(x, geouri.GeoURI_WGS84))
-        self.assertIsNone(x.uncertainty)
-        self.assertEqual("geo:0,0,0", str(geo_uri("geo:0,0,0")))
-    
-    def test_equality(self):
-        """Testing geo_uri equaltity operation."""
-        self.assertEqual(geo_uri("geo:0,0,0"), geo_uri("geo:0,0,0"))
-        self.assertEqual(geo_uri("geo:0,0,0;crs=wgs84"), geo_uri("geo:0,0,0"))
-        self.assertEqual(geo_uri("geo:0,0,0;crs=wgs84"), geo_uri("geo:0,0,0;crs=wgs84"))
+    def test_any(self):
+        p = rfc6350.build_parameter("ANY-PARAM", 'param1,param2')
+        self.assertEqual('ANY-PARAM', p.name)
+        self.assertEqual(['param1', 'param2'], p.value)
+        self.assertEqual(';ANY-PARAM=param1,param2', str(p))        
         
-        self.assertEqual(geo_uri("geo:90,0,0"), geo_uri("geo:90,0,0"))
-        self.assertEqual(geo_uri("geo:90,0,0"), geo_uri("geo:90,-22.43,0;crs=wgs84"))
-        self.assertEqual(geo_uri("geo:90,0,0"), geo_uri("geo:90,180,0"))
-        self.assertEqual(geo_uri("geo:90,0,0"), geo_uri("geo:90,-180,0"))
-        self.assertEqual(geo_uri("geo:0,180,0"), geo_uri("geo:0,-180,0"))
-        self.assertEqual(geo_uri("geo:27,180,0"), geo_uri("geo:27,-180,0"))
-        
-        self.assertEqual(geo_uri("geo:0,0,0;u=30"), geo_uri("geo:0,0,0;u=30"))
-        self.assertEqual(geo_uri("geo:0,0,0;u=30"), geo_uri("geo:0,0,0;u=29.9999"))
-        self.assertNotEqual(geo_uri("geo:0,0,0;u=30"), geo_uri("geo:0,0,0"))
-        self.assertNotEqual(geo_uri("geo:0,0,0;u=30"), geo_uri("geo:0,0;u=30"))
-        
-        self.assertNotEqual(geo_uri("geo:0,0,0"), geo_uri("geo:0,0"))
-        self.assertNotEqual(geo_uri("geo:0,0,0"), geo_uri("geo:1,0,0"))
-        self.assertNotEqual(geo_uri("geo:0,0,0"), geo_uri("geo:0,1,0"))
-        self.assertNotEqual(geo_uri("geo:0,0,0"), geo_uri("geo:0,0,1"))
-        
-        self.assertEqual(geo_uri("geo:40.685922,-111.853206,1321"), geo_uri("geo:40.685922,-111.853206,1321"))
-        self.assertEqual(geo_uri("geo:40.685922,-111.853206"), geo_uri("geo:40.685922,-111.853206"))
-        self.assertNotEqual(geo_uri("geo:40.685922,-111.853206,1321"), geo_uri("geo:40.685922,-111.853206"))
-        
-        self.assertEqual(geo_uri("geo:40.685,-111.85,1321"), geo_uri("geo:40.685000,-111.8500,1321"))
-        
-        self.assertEqual(geo_uri("geo:0,0,0;unknown=ab-cd"), geo_uri("geo:0,0,0;unknown=ab%2dcd"))
-        self.assertNotEqual(geo_uri("geo:0,0,0;unknown=ab%21cd"), geo_uri("geo:0,0,0"))
-        
-        self.assertEqual(geo_uri("geo:0,0;a=1;b=2"), geo_uri("geo:0,0;b=2;a=1"))
-        
-    def test_unknown_crs(self):
-        """Check that geo_uri raises exception for unknown coordinate
-        reference system (crs)."""
-        self.assertRaises(ValueError, geo_uri, "geo:0,0,0;crs=SpamEggs")
-        
-    def test_faulty(self):
-        """Check that geo_uri raises exceptions for faulty URI formats."""
-        self.assertRaises(ValueError, geo_uri, "xxx:40.685922,-111.853206,1321;crs=wgs84;u=1.2")
-        self.assertRaises(ValueError, geo_uri, "geo:40.685922,-111.853206,1321;u=1.2;crs=wgs84")
-        self.assertRaises(ValueError, geo_uri, "geo:40.685922,-111.853206,1321;crs=wgs84;spam=1;u=1.2")
+    def test_language(self):
+        from rfc5646 import LanguageTag
+        l = LanguageTag('en-US')
+        p = rfc6350.build_parameter('LANGUAGE', 'en-US')
+        self.assertEqual('LANGUAGE', p.name)
+        self.assertEqual(l, p.value)
+        self.assertEqual(';LANGUAGE=en-US', str(p))
 
+    def test_value(self):
+        p = rfc6350.build_parameter('VALUE', 'text')
+        self.assertEqual('VALUE', p.name)
+        self.assertEqual('text', p.value)
+        self.assertEqual(';VALUE=text', str(p))
+    
+    @unittest.expectedFailure
+    def test_value_invalid(self):
+        rfc6350.build_parameter('VALUE', 'spam_eggs')
 
-class GeoURI_WGS84_Test(unittest.TestCase):
-    def test_urn(self):
-        """Testing the URN for the WGS-84 CRS identifier."""
-        self.assertEqual("urn:ogc:def:crs:EPSG::4979", geo_uri("geo:48.2010,16.3695,183").crs_urn)
-        self.assertEqual("urn:ogc:def:crs:EPSG::4326", geo_uri("geo:48.198634,16.371648;crs=wgs84;u=40").crs_urn)
+    def test_pref(self):
+        p = rfc6350.build_parameter("PREF", '69')
+        self.assertEqual('PREF', p.name)
+        self.assertEqual(69, p.value)
+        self.assertEqual(';PREF=69', str(p))        
     
-    def test_3d(self):
-        """Testing geo_uri WGS-84 lattitue, longitude, and altitude format."""
-        x = geo_uri("geo:40.685922,-111.853206,1321;crs=WGS84")
-        self.assertEqual('wgs84', x.crs)
-        self.assertAlmostEqual(40.685922, x.lattitude, places=6)
-        self.assertAlmostEqual(-111.853206, x.longitude, places=6)
-        self.assertAlmostEqual(1321, x.altitude, places=3)
-        self.assertEqual("geo:40.685922,-111.853206,1321;crs=wgs84", str(x))
+    @unittest.expectedFailure
+    def test_pref_small(self):
+        rfc6350.build_parameter('PREF', '-1')
     
-    def test_2d(self):
-        """Testing geo_uri WGS-84 lattitue and longitude format."""
-        x = geo_uri("geo:40.685922,-111.853206;crs=wgs84")
-        self.assertEqual('wgs84', x.crs)
-        self.assertAlmostEqual(40.685922, x.lattitude, places=6)
-        self.assertAlmostEqual(-111.853206, x.longitude, places=6)
-        self.assertIsNone(x.altitude)
-        self.assertEqual("geo:40.685922,-111.853206;crs=wgs84", str(x))
-    
-    def test_0(self):
-        """Testing geo_uri WGS-84 zeros."""
-        x = geo_uri("geo:0,0,0;crs=wgs84")
-        y = geo_uri("geo:-0,-0,-0;crs=wgs84")
-        self.assertEqual(x, y)
-        self.assertEqual("geo:0,0,0;crs=wgs84", str(x))
-        self.assertEqual("geo:0,0,0;crs=wgs84", str(y))
-    
-    def test_poles(self):
-        """Testing geo_uri WGS-84 at the poles."""
-        x = geo_uri("geo:90,0;crs=wgs84")
-        self.assertEqual(x, geo_uri("geo:90,-180;crs=wgs84"))
-        self.assertEqual(x, geo_uri("geo:90,180;crs=wgs84"))
-        self.assertEqual(x, geo_uri("geo:90,1;crs=wgs84"))
-        self.assertEqual("geo:90,0;crs=wgs84", str(geo_uri("geo:90,-23;crs=wgs84")))
-        
-        x = geo_uri("geo:-90,0;crs=wgs84")
-        self.assertEqual(x, geo_uri("geo:-90,-180;crs=wgs84"))
-        self.assertEqual(x, geo_uri("geo:-90,180;crs=wgs84"))
-        self.assertEqual(x, geo_uri("geo:-90,-32;crs=wgs84"))
-        self.assertEqual("geo:-90,0;crs=wgs84", str(geo_uri("geo:-90,72;crs=wgs84")))
-    
-    def test_uncertainty(self):
-        """Testing geo_uri WGS-84 uncertainty ranges."""
-        x = geo_uri("geo:40.685922,-111.853206,1321;crs=wgs84;u=0")
-        self.assertAlmostEqual(40.685922, x.lattitude, places=6)
-        self.assertAlmostEqual(-111.853206, x.longitude, places=6)
-        self.assertAlmostEqual(1321, x.altitude, places=3)
+    @unittest.expectedFailure
+    def test_pref_large(self):
+        rfc6350.build_parameter('PREF', '101')
 
-        xr = x.lattitude_range
-        self.assertAlmostEqual(40.685922, xr[0], places=6)
-        self.assertAlmostEqual(40.685922, xr[1], places=6)
-        
-        xr = x.longitude_range
-        self.assertAlmostEqual(-111.853206, xr[0], places=6)
-        self.assertAlmostEqual(-111.853206, xr[1], places=6)
-        
-        xr = x.altitude_range
-        self.assertAlmostEqual(1321, xr[0], places=3)
-        self.assertAlmostEqual(1321, xr[1], places=3)
-        
-        y = geo_uri("geo:40.685922,-111.853206,1321;crs=wgs84;u=30")
-        self.assertAlmostEqual(40.685922, y.lattitude, places=6)
-        self.assertAlmostEqual(-111.853206, y.longitude, places=6)
-        self.assertAlmostEqual(1321, y.altitude, places=3)
-        
-        yr = y.lattitude_range
-        self.assertAlmostEqual(40.685652, yr[0], places=6)
-        self.assertAlmostEqual(40.686192, yr[1], places=6)
-        
-        yr = y.longitude_range
-        # TODO: This range assumes a sphere of radius 6378137 m, whereas
-        # the earth is an elipsoid with that radius as the semi-major
-        # axis and 6356752.3142 m as the radius of the semi-minor axis
-        # at the poles.
-        self.assertAlmostEqual(-111.853561, yr[0], places=6)
-        self.assertAlmostEqual(-111.852851, yr[1], places=6)
-        
-        yr = y.altitude_range
-        self.assertAlmostEqual(1291, yr[0], places=3)
-        self.assertAlmostEqual(1351, yr[1], places=3)
-        
-        z = geo_uri("geo:40.685922,-111.853206,1321;crs=wgs84")
-        self.assertIsNone(z.lattitude_range)
-        self.assertIsNone(z.longitude_range)
-        self.assertIsNone(z.altitude_range)
-    
-    def test_max(self):
-        """Testing geo_uri WGS-84 max values."""
-        self.assertRaises(ValueError, geo_uri, "geo:90.000001,180.000001,0;crs=wgs84")
-    
-    def test_min(self):
-        """Testing geo_uri WGS-84 min values."""
-        self.assertRaises(ValueError, geo_uri, "geo:-90.000001,-180.000001,0;crs=wgs84")
-    
+    def test_altid(self):
+        p = rfc6350.build_parameter("ALTID", 'param1')
+        self.assertEqual('ALTID', p.name)
+        self.assertEqual('param1', p.value)
+        self.assertEqual(';ALTID=param1', str(p))        
+
+    def test_pid(self):
+        p = rfc6350.build_parameter("PID", '131.5,5,0.7')
+        self.assertEqual('PID', p.name)
+        self.assertEqual([131.5, 5.0, 0.7], p.value)
+        self.assertEqual(';PID=131.5,5,0.7', str(p))        
+
+    def test_type(self):
+        p = rfc6350.build_parameter('TYPE', 'work,home')
+        self.assertEqual('TYPE', p.name)
+        self.assertEqual(['work','home'], p.value)
+        self.assertEqual(';TYPE=work,home', str(p))
+
+    @unittest.expectedFailure
+    def test_type_invalid(self):
+        rfc6350.build_parameter('TYPE', 'spam_eggs')
+
+    def test_mediatype(self):
+        p = rfc6350.build_parameter("MEDIATYPE", 'text/plain')
+        self.assertEqual('MEDIATYPE', p.name)
+        self.assertEqual(rfc2045.ContentType('text/plain'), p.value)
+        self.assertEqual(';MEDIATYPE=text/plain', str(p))        
+
+    def test_calscale(self):
+        """`§ 5.8 <http://tools.ietf.org/html/rfc6350#section-5.8>`_"""
+        p = rfc6350.build_parameter("CALSCALE", 'gregorian')
+        self.assertEqual('CALSCALE', p.name)
+        self.assertEqual('gregorian', p.value)
+        self.assertEqual(';CALSCALE=gregorian', str(p))
+
+    def test_sortas(self):
+        """`§ 5.9 <http://tools.ietf.org/html/rfc6350#section-5.9>`_"""
+        p = rfc6350.build_parameter("SORT-AS", 'a,b,c')
+        self.assertEqual('SORT-AS', p.name)
+        self.assertEqual(['a', 'b', 'c'], p.value)
+        self.assertEqual(';SORT-AS=a,b,c', str(p))
+
+    def test_geo(self):
+        """`§ 5.10 <http://tools.ietf.org/html/rfc6350#section-5.10>`_"""
+        p = rfc6350.build_parameter("GEO", '"geo:40.685922,-111.853206,1321"')
+        self.assertEqual('GEO', p.name)
+        self.assertEqual(rfc5870.geo_uri("geo:40.685922,-111.853206,1321"), p.value)
+        self.assertEqual(';GEO="geo:40.685922,-111.853206,1321"', str(p))
+
+    def test_tz(self):
+        """`§ 5.11 <http://tools.ietf.org/html/rfc6350#section-5.11>`_"""
+        p = rfc6350.build_parameter("TZ", 'MST')
+        self.assertEqual('TZ', p.name)
+        self.assertEqual("MST", p.value)
+        self.assertEqual(';TZ=MST', str(p))
+
+        p = rfc6350.build_parameter("TZ", '"tz:unknown"')
+        self.assertEqual('TZ', p.name)
+        self.assertEqual("tz:unknown", p.value)
+        self.assertEqual(';TZ="tz:unknown"', str(p))
 
 
 
