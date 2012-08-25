@@ -50,7 +50,7 @@ setup(
     license="Apache License, Version 2.0",    
     #scripts=[],
     #data_files=[],
-    packages=['rfc2045', 'rfc5646', 'rfc6350'],
+    packages=['rfc2045', 'rfc5646', 'rfc5870', 'rfc6350'],
     #package_dir={'' : 'src'},
     package_data = {
         'rfc5646': ['language-subtag-registry.txt']

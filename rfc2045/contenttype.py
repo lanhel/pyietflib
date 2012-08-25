@@ -175,7 +175,6 @@ class ContentType(dict):
         return '{0}/{1}{2}'.format(self.type, self.subtype, ';'.join(params))
     
     def __repr__(self):
-        raise NotImplementedError()
         return "ContentType('{0}')".format(str(self))
     
     def __setitem__(self, key, value):
