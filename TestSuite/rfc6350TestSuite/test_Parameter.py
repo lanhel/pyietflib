@@ -23,107 +23,107 @@ __docformat__ = "reStructuredText en"
 import sys
 import unittest
 
-import rfc2045
-import rfc5870
-import rfc6350
+import pyietflib.rfc2045
+import pyietflib.rfc5870
+import pyietflib.rfc6350
 
 class ParameterTest(unittest.TestCase):
 
     def test_any(self):
-        p = rfc6350.build_parameter("ANY-PARAM", 'param1,param2')
+        p = pyietflib.rfc6350.build_parameter("ANY-PARAM", 'param1,param2')
         self.assertEqual('ANY-PARAM', p.name)
         self.assertEqual(['param1', 'param2'], p.value)
         self.assertEqual(';ANY-PARAM=param1,param2', str(p))        
         
     def test_language(self):
-        from rfc5646 import LanguageTag
+        from pyietflib.rfc5646 import LanguageTag
         l = LanguageTag('en-US')
-        p = rfc6350.build_parameter('LANGUAGE', 'en-US')
+        p = pyietflib.rfc6350.build_parameter('LANGUAGE', 'en-US')
         self.assertEqual('LANGUAGE', p.name)
         self.assertEqual(l, p.value)
         self.assertEqual(';LANGUAGE=en-US', str(p))
 
     def test_value(self):
-        p = rfc6350.build_parameter('VALUE', 'text')
+        p = pyietflib.rfc6350.build_parameter('VALUE', 'text')
         self.assertEqual('VALUE', p.name)
         self.assertEqual('text', p.value)
         self.assertEqual(';VALUE=text', str(p))
     
     @unittest.expectedFailure
     def test_value_invalid(self):
-        rfc6350.build_parameter('VALUE', 'spam_eggs')
+        pyietflib.rfc6350.build_parameter('VALUE', 'spam_eggs')
 
     def test_pref(self):
-        p = rfc6350.build_parameter("PREF", '69')
+        p = pyietflib.rfc6350.build_parameter("PREF", '69')
         self.assertEqual('PREF', p.name)
         self.assertEqual(69, p.value)
         self.assertEqual(';PREF=69', str(p))        
     
     @unittest.expectedFailure
     def test_pref_small(self):
-        rfc6350.build_parameter('PREF', '-1')
+        pyietflib.rfc6350.build_parameter('PREF', '-1')
     
     @unittest.expectedFailure
     def test_pref_large(self):
-        rfc6350.build_parameter('PREF', '101')
+        pyietflib.rfc6350.build_parameter('PREF', '101')
 
     def test_altid(self):
-        p = rfc6350.build_parameter("ALTID", 'param1')
+        p = pyietflib.rfc6350.build_parameter("ALTID", 'param1')
         self.assertEqual('ALTID', p.name)
         self.assertEqual('param1', p.value)
         self.assertEqual(';ALTID=param1', str(p))        
 
     def test_pid(self):
-        p = rfc6350.build_parameter("PID", '131.5,5,0.7')
+        p = pyietflib.rfc6350.build_parameter("PID", '131.5,5,0.7')
         self.assertEqual('PID', p.name)
         self.assertEqual([131.5, 5.0, 0.7], p.value)
         self.assertEqual(';PID=131.5,5,0.7', str(p))        
 
     def test_type(self):
-        p = rfc6350.build_parameter('TYPE', 'work,home')
+        p = pyietflib.rfc6350.build_parameter('TYPE', 'work,home')
         self.assertEqual('TYPE', p.name)
         self.assertEqual(['work','home'], p.value)
         self.assertEqual(';TYPE=work,home', str(p))
 
     @unittest.expectedFailure
     def test_type_invalid(self):
-        rfc6350.build_parameter('TYPE', 'spam_eggs')
+        pyietflib.rfc6350.build_parameter('TYPE', 'spam_eggs')
 
     def test_mediatype(self):
-        p = rfc6350.build_parameter("MEDIATYPE", 'text/plain')
+        p = pyietflib.rfc6350.build_parameter("MEDIATYPE", 'text/plain')
         self.assertEqual('MEDIATYPE', p.name)
-        self.assertEqual(rfc2045.ContentType('text/plain'), p.value)
+        self.assertEqual(pyietflib.rfc2045.ContentType('text/plain'), p.value)
         self.assertEqual(';MEDIATYPE=text/plain', str(p))        
 
     def test_calscale(self):
         """`§ 5.8 <http://tools.ietf.org/html/rfc6350#section-5.8>`_"""
-        p = rfc6350.build_parameter("CALSCALE", 'gregorian')
+        p = pyietflib.rfc6350.build_parameter("CALSCALE", 'gregorian')
         self.assertEqual('CALSCALE', p.name)
         self.assertEqual('gregorian', p.value)
         self.assertEqual(';CALSCALE=gregorian', str(p))
 
     def test_sortas(self):
         """`§ 5.9 <http://tools.ietf.org/html/rfc6350#section-5.9>`_"""
-        p = rfc6350.build_parameter("SORT-AS", 'a,b,c,"special;case"')
+        p = pyietflib.rfc6350.build_parameter("SORT-AS", 'a,b,c,"special;case"')
         self.assertEqual('SORT-AS', p.name)
         self.assertEqual(['a', 'b', 'c', 'special;case'], p.value)
         self.assertEqual(';SORT-AS=a,b,c,"special;case"', str(p))
 
     def test_geo(self):
         """`§ 5.10 <http://tools.ietf.org/html/rfc6350#section-5.10>`_"""
-        p = rfc6350.build_parameter("GEO", '"geo:40.685922,-111.853206,1321"')
+        p = pyietflib.rfc6350.build_parameter("GEO", '"geo:40.685922,-111.853206,1321"')
         self.assertEqual('GEO', p.name)
-        self.assertEqual(rfc5870.geo_uri("geo:40.685922,-111.853206,1321"), p.value)
+        self.assertEqual(pyietflib.rfc5870.geo_uri("geo:40.685922,-111.853206,1321"), p.value)
         self.assertEqual(';GEO="geo:40.685922,-111.853206,1321"', str(p))
 
     def test_tz(self):
         """`§ 5.11 <http://tools.ietf.org/html/rfc6350#section-5.11>`_"""
-        p = rfc6350.build_parameter("TZ", 'MST')
+        p = pyietflib.rfc6350.build_parameter("TZ", 'MST')
         self.assertEqual('TZ', p.name)
         self.assertEqual("MST", p.value)
         self.assertEqual(';TZ=MST', str(p))
 
-        p = rfc6350.build_parameter("TZ", '"tz:unknown"')
+        p = pyietflib.rfc6350.build_parameter("TZ", '"tz:unknown"')
         self.assertEqual('TZ', p.name)
         self.assertEqual("tz:unknown", p.value)
         self.assertEqual(';TZ="tz:unknown"', str(p))

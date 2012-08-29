@@ -24,9 +24,9 @@ import logging
 import string
 import re
 
-from rfc2045 import ContentType
-import rfc5870
-from rfc5646 import LanguageTag
+from pyietflib.rfc2045 import ContentType
+import pyietflib.rfc5870
+from pyietflib.rfc5646 import LanguageTag
 
 __all__ = ['build_parameter']
 __log__ = logging.getLogger(__name__)
@@ -329,12 +329,12 @@ class GeoParam(Parameter):
     param_name = 'GEO'
     
     def parse_value(self, value):
-        return rfc5870.geo_uri(value.strip('"'))
+        return pyietflib.rfc5870.geo_uri(value.strip('"'))
 
     def check_value(self, value):
         if isinstance(value, str):
-            value = rfc5870.geo_uri(value)
-        elif isinstance(value, rfc5870.geouri.GeoURI):
+            value = pyietflib.rfc5870.geo_uri(value)
+        elif isinstance(value, pyietflib.rfc5870.geouri.GeoURI):
             return value
         else:
             return None

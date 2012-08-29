@@ -24,7 +24,7 @@ import sys
 import locale
 import unittest
 
-from rfc2045 import *
+from pyietflib.rfc2045 import *
 
 class TestContentID(unittest.TestCase):
     

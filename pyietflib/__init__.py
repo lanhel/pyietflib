@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""`RFC 2045 <http://tools.ietf.org/html/rfc2045>`_ Multipurpose Internet
-Mail Extensions (MIME) Part One: Format of Internet Message Bodies headers
-parsering and validation.
+"""pyietflib is a collection of classes that will parse various IETF RFC
+defined data streams into objects that may be used directly in Python,
+and the written as fully compliant data streams.
 """
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,11 +20,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import sys
-if sys.version_info < (3, 2):
-    raise Exception("pyietflib requires Python 3.2 or higher.")
 
-from .contenttype import *
-
+from .headers import *
+from .generators import *
 
 

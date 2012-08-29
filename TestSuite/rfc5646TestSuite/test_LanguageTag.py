@@ -24,7 +24,7 @@ import sys
 import locale
 import unittest
 
-from rfc5646 import *
+from pyietflib.rfc5646 import *
 
 class TestLanguageTag(unittest.TestCase):
     

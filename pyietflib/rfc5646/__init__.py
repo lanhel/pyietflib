@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-#-----------------------------------------------------------------------------
-"""RFC2045 Unit Test."""
-__author__ = ('Lance Finn Helsten',)
+"""`RFC 5646 <http://tools.ietf.org/html/rfc5646>`_ Tags for Identifying
+Languages parser.
+"""
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
 __license__ = """
@@ -18,17 +18,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__docformat__ = "reStructuredText en"
 
-import sys
-import locale
-import unittest
+from .languagetag import *
+from .registry import *
 
-from pyietflib.rfc2045 import *
+def accept_langauge_factory(value):
+    raise NotImplementedError()
 
-class TestContentTransferEncoding(unittest.TestCase):
-    
-    def test_required(self):
-        """Check that required parts of RFC2045 Content-Transfer-Encoding
-        are processed correctly."""
-        pass
+def content_language_factory(value):
+    raise NotImplementedError()
+
+from ..headers import register_header_parser
+register_header_parser('accept-language', accept_langauge_factory)
+register_header_parser('content-language', content_language_factory)
+
+

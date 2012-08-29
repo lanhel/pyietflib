@@ -23,7 +23,7 @@ __docformat__ = "reStructuredText en"
 import sys
 import unittest
 
-from rfc6350 import *
+from pyietflib.rfc6350 import *
 
 class PropertyTest(unittest.TestCase):
     

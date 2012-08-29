@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""`RFC 5646 <http://tools.ietf.org/html/rfc5646>`_ Tags for Identifying
-Languages parser.
+"""`RFC 2045 <http://tools.ietf.org/html/rfc2045>`_ Multipurpose Internet
+Mail Extensions (MIME) Part One: Format of Internet Message Bodies headers
+parsering and validation.
 """
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -19,12 +20,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import sys
-if sys.version_info < (3, 2):
-    raise Exception("pyietflib requires Python 3.2 or higher.")
+from .contenttype import *
 
+def parser_factory(value):
+    return 'spam'
 
-from .languagetag import *
-from .registry import *
+from ..headers import register_header_parser
+register_header_parser('Content-Type', parser_factory)
 
 

@@ -24,7 +24,7 @@ __docformat__ = "reStructuredText en"
 import sys
 import unittest
 
-from rfc5870 import *
+from pyietflib.rfc5870 import *
 
 class GeoSchemeTest(unittest.TestCase):
 

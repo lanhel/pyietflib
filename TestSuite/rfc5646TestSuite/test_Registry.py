@@ -24,7 +24,7 @@ import sys
 import io
 import unittest
 
-from rfc5646 import *
+from pyietflib.rfc5646 import *
 
 class TestLanguageRegistry(unittest.TestCase):
     

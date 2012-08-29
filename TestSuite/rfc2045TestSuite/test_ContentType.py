@@ -24,7 +24,7 @@ import sys
 import locale
 import unittest
 
-from rfc2045 import *
+from pyietflib.rfc2045 import *
 
 class TestContentType(unittest.TestCase):
     """This will test RFC 2045 Multipurpose Internet Mail Extensions

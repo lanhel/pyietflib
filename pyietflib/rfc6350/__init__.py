@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-"""`RFC 5870 <http://tools.ietf.org/html/rfc5870>`_ A Uniform Resource
-Identifier for Geographic Locations ('geo' URI).
+"""`vCard <http://tools.ietf.org/html/rfc6350>`_ parser to convert a
+vCard representation to a structured object of a vCard, and to create
+a vCard representation from the structured object.
+
+
+media-types
+-----------
+- text/vcard;version=4.0;charset=UTF-8
+- text/vcard;version=3.0;charset=UTF-8
+
+
+File Extension
+--------------
+- .vcf
+- .vcard
 """
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -19,11 +32,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import sys
-if sys.version_info < (3, 2):
-    raise Exception("pyietflib requires Python 3.2 or higher.")
+from .vcard import *
+from .property import *
+from .parameter import *
 
-from .geouri import *
+def generator_factory(stream):
+    return 'spam'
+
+from ..generators import register_type_generator
+register_type_generator('text/vcard', generator_factory)
 
 
 
