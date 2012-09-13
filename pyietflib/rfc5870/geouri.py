@@ -102,20 +102,21 @@ class GeoURI(dict):
         self.__normalized = False
         
     def __eq__(self, o):
-        self.__normalize_coord()
-        if not (isinstance(o, GeoURI) and
-                self.crs == o.crs and
-                self.uncertainty == o.uncertainty and
-                self.coord_a == o.coord_a and
-                self.coord_b == o.coord_b and
-                self.coord_c == o.coord_c):
-            return False
-        for pname, pvalue0 in self.items():
-            if pname not in o:
+        if isinstance(o, GeoURI):
+            self.__normalize_coord()
+            if not (self.crs == o.crs and
+                    self.uncertainty == o.uncertainty and
+                    self.coord_a == o.coord_a and
+                    self.coord_b == o.coord_b and
+                    self.coord_c == o.coord_c):
                 return False
-            if not self.compare_parameter(pname, pvalue0, o[pname]):
-                return False
-        return True
+            for pname, pvalue0 in self.items():
+                if pname not in o:
+                    return False
+                if not self.compare_parameter(pname, pvalue0, o[pname]):
+                    return False
+            return True
+        return NotImplemented
     
     def __ne__(self, o):
         return not self.__eq__(o)

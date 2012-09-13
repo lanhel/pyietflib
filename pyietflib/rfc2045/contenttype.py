@@ -156,10 +156,11 @@ class ContentType(dict):
                 self[k] = v
     
     def __eq__(self, o):
-        return (isinstance(o, type(self)) and 
-                self.type == o.type and
+        if isinstance(o, type(self)):
+            return (self.type == o.type and
                 self.subtype == o.subtype and
                 dict(self) == dict(o))
+        return NotImplemented
         
     def __str__(self):
         defaults = iana_default_parameters(self.type, self.subtype)

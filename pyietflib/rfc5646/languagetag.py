@@ -200,14 +200,16 @@ class LanguageTag():
             raise ValueError("Invalid LanguageTag `{0}`.".format(value))
 
     def __eq__(self, o):
-        return (isinstance(o, type(self)) and
-        self.language == o.language and
-        self.extlang == o.extlang and
-        self.script == o.script and
-        self.region == o.region and
-        self.variants == o.variants and
-        self.extensions == o.extensions and
-        self.privateuse == o.privateuse)
+        if isinstance(o, type(self)):
+            return (self.language == o.language and
+                self.extlang == o.extlang and
+                self.script == o.script and
+                self.region == o.region and
+                self.variants == o.variants and
+                self.extensions == o.extensions and
+                self.privateuse == o.privateuse)
+        return NotImplemented
+        
         
     def __str__(self):
         ret = [self.language]

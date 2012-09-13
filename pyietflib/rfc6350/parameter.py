@@ -29,7 +29,7 @@ import pyietflib.rfc5870
 from pyietflib.rfc5646 import LanguageTag
 
 __all__ = ['build_parameter']
-__log__ = logging.getLogger(__name__)
+__log__ = logging.getLogger('rfc6350')
 
 
 iana_token_re = re.compile(r"""^[-a-zA-Z0-9]+$""", flags=re.VERBOSE)
@@ -59,31 +59,31 @@ class Parameter():
         delattr(self, 'column')
     
     def __str__(self):
-        def escape(value):
+        def value_str(value):
             if isinstance(value, int):
                 value = '{0:d}'.format(value)
             elif isinstance(value, float):
                 value = '{0:f}'.format(value)
                 value = value.rstrip('0')
                 value = value.rstrip('.')
-            elif ';' in value or ':' in value:
-                value = '"{0}"'.format(value)
             return value
         
         ret = [';', self.name, '=']
         if isinstance(self.value, (str, int, float)):
-            ret.append(escape(self.value))
+            ret.append(value_str(self.value))
         elif isinstance(self.value, list):
-            ret.append(','.join([escape(v) for v in self.value]))
+            ret.append(','.join([value_str(v) for v in self.value]))
         else:
-            ret.append(escape(str(self.value)))
+            ret.append(value_str(str(self.value)))
+        
+        if ';' in ret[-1] or ':' in ret[-1]:
+            ret[-1] = '"{0}"'.format(ret[-1])
         return ''.join(ret)
     
     def __eq__(self, o):
         if isinstance(o, Parameter):
             return (self.name == o.name and self.value == o.value)
-        else:
-            return False
+        return NotImplemented
     
     def parse_value(self, value):
         """Parse the string version of the value into a type appropriate
@@ -97,7 +97,7 @@ class Parameter():
         return value
     
     def raise_invalid_value(self, value):
-        raise ValueError("Invalid value `{0}` for {1.name} parameter ({1.line}, {1.column}).".format(value, self))
+        raise ValueError('Invalid value `{0}` for parameter "{1.name}" [{1.line}, {1.column}].'.format(value, self))
     
     @property
     def name(self):
@@ -146,7 +146,7 @@ class AnyParam(Parameter):
             raise ValueError("Invalid parameter name`{0.name}` ({0.line}, {0.column}).".format(self))
         #elif not x_name_re.match(self.name):
         #    raise ValueError("Invalid x-name parameter `{0.name}` ({0.line}, {0.column}).".format(self))
-        return [v.strip('"') for v in value.split(',')]
+        return value.strip('"').split(',')
 
 class LanguageParam(Parameter):
     """`§ 5.1 <http://tools.ietf.org/html/rfc6350#section-5.1>`_
@@ -269,7 +269,7 @@ class TypeParam(Parameter):
         "sweetheart", "me", "agent", "emergency")
     
     def parse_value(self, value):
-        return value.split(',')
+        return value.strip('"').split(',')
     
     def check_value(self, value):
         invalid = [v for v in value if v not in TypeParam.valid_values]
@@ -320,7 +320,7 @@ class SortAsParam(Parameter):
     param_name = 'SORT-AS'
     
     def parse_value(self, value):
-        return [v.strip('"') for v in value.split(',')]
+        return value.strip('"').split(',')
 
 
 class GeoParam(Parameter):
@@ -355,9 +355,9 @@ defined_params = dict([(c.param_name, c) for c in locals().values() if getattr(c
 def build_parameter(name, value, line=0, column=0):
     c = defined_params.get(name.upper())
     if c:
-        return c(c.param_name, value)
+        return c(c.param_name, value, line, column)
     else:
-        return AnyParam(name, value)
+        return AnyParam(name, value, line, column)
 
 
 

@@ -20,6 +20,7 @@ limitations under the License.
 import sys
 if sys.version_info < (3, 2):
     raise Exception("pyvcard requires Python 3.2 or higher.")
+
 import abnf
 
 
