@@ -32,22 +32,23 @@ import string
 
 __all__ = ['isodate',
         'CALENDAR', 'ORDINAL', 'WEEK',
-        'CENTURY', 'YEAR',
+        'CENTURY', 'DECADE', 'YEAR',
         'MONTH', 'DAYOFMONTH',
         'DAYOFYEAR',
         'WEEKOFYEAR', 'DAYOFWEEK'
     ]
 __log__ = logging.getLogger("iso8601")
 
-CALENDAR = 0b1110110001
-ORDINAL  = 0b1110001001
-WEEK     = 0b1111000111
+CALENDAR   = 0b1101110001
+ORDINAL    = 0b1101001001
+WEEK       = 0b1111000111
 
 CENTURY    = (0b1100000001, 0b1111111111)
-YEAR       = (0b1110000001, 0b0011111111)
-MONTH      = (0b1110100001, 0b0000110001)
-DAYOFMONTH = (0b1110110001, 0b0000010001)
-DAYOFYEAR  = (0b1110001001, 0b0000001001)
+DECADE     = (0b1110000001, 0b0011000111)
+YEAR       = (0b1101000001, 0b0001111111)
+MONTH      = (0b1111100001, 0b0000110001)
+DAYOFMONTH = (0b1111110001, 0b0000010001)
+DAYOFYEAR  = (0b1111001001, 0b0000001001)
 WEEKOFYEAR = (0b1111000101, 0b0000000111)
 DAYOFWEEK  = (0b1111000111, 0b0000000011)
 
@@ -282,12 +283,14 @@ class isodate():
                 expanded=None, century=None, year=None,
                 month=None, dayofmonth=None,
                 dayofyear=None,
-                weekyear=None, weekofyear=None, dayofweek=None):
+                weekcentury=None, weekdecade=None, weekyearofdec=None,
+                weekofyear=None, dayofweek=None):
         
         if (century is None and year is None and
                 month is None and dayofmonth is None and
                 dayofyear is None and
-                weekyear is None and weekofyear is None and dayofweek is None):
+                weekcentury is None and weekdecade is None and weekyearofdec is None and
+                weekofyear is None and dayofweek is None):
             raise ValueError("At least one date component must be specified.")
         
         self.__orig_expanded = expanded
@@ -296,20 +299,28 @@ class isodate():
         self.__orig_month = month
         self.__orig_dayofmonth = dayofmonth
         self.__orig_dayofyear = dayofyear
-        self.__orig_weekyear = weekyear
+        self.__orig_weekcentury = weekcentury
+        self.__orig_weekdecade = weekdecade
+        self.__orig_weekyearofdec = weekyearofdec
         self.__orig_weekofyear = weekofyear
         self.__orig_dayofweek = dayofweek
         
-        if self.__today_cache is None:
-            #Initial creation of today object
-            assert century is not None
-            assert year is not None
-            assert month is not None
-            assert dayofmonth is not None
-            assert dayofyear is not None
-            assert weekyear is not None
-            assert weekofyear is not None
-            assert dayofweek is not None
+        if (expanded is not None and century is not None and year is not None and
+                month is not None and dayofmonth is not None and
+                dayofyear is not None and
+                weekcentury is not None and weekdecade is not None and weekyearofdec is not None and
+                weekofyear is not None and dayofweek is not None):
+            self.__expanded = expanded
+            self.__century = century
+            self.__year = year
+            self.__month = month
+            self.__dayofmonth = dayofmonth
+            self.__dayofyear = dayofyear
+            self.__weekcentury = weekcentury
+            self.__weekdecade = weekdecade
+            self.__weekyearofdec = weekyearofdec
+            self.__weekofyear = weekofyear
+            self.__dayofweek = dayofweek
             self.iso_implied = None
         else:
             self.iso_implied = self.today()
@@ -340,6 +351,17 @@ class isodate():
         ("Saturday",  5, 6),
         ("Sunday",    6, 0),
     ]
+    
+    __epoc = None
+    @classmethod
+    def epoc(cls):
+        """Return the epoc for all calendars which is 1 Jan 0001."""
+        if cls.__epoc is None:
+            cls.__epoc = isodate(expanded=0, century=0, year=1, month=1, dayofmonth=1,
+                    dayofyear=1,
+                    weekcentury=0, weekdecade=0, weekyearofdec=1,
+                    weekofyear=1, dayofweek=1)
+        return cls.__epoc
     
     __today_expire = 0
     __today_cache = None
@@ -387,11 +409,14 @@ class isodate():
         or any object duck typed to those objects."""
         tt = dt.timetuple()
         wy, woy, dow = dt.isocalendar()
+        wc = wy // 100
+        wd = wy % 100 // 10
+        wy = wy % 10
         ret = cls(
             expanded=0, century=(dt.year // 100), year=(dt.year % 100),
             month=dt.month, dayofmonth=dt.day,
             dayofyear=tt.tm_yday,
-            weekyear = wy, weekofyear=woy, dayofweek=dow
+            weekcentury=wc, weekdecade=wd, weekyearofdec=wy, weekofyear=woy, dayofweek=dow
         )
         ret.iso_implied = None
         return ret
@@ -406,7 +431,8 @@ class isodate():
     @classmethod
     def compute_all_fields(cls, expanded=None, century=None, year=None,
             month=None, dayofmonth=None, dayofyear=None,
-            weekyear=None, weekofyear=None, dayofweek=None):
+            weekcentury=None, weekdecade=None, weekyearofdec=None,
+            weekofyear=None, dayofweek=None, refdate=None):
         """Given a set of ISO date fields compute all fields that are `None`
         and return the fields in order: expanded, century, year, month,
         dayofmonth, dayofyear, weekyear, weekofyear, dayofweek."""
@@ -441,7 +467,7 @@ class isodate():
                 week = (pyd + dayofyear - dow + 10) // 7
             elif week == 53 and dow < 4:
                 week = 1
-            return weekyear, week, dow
+            return weekyear // 100, weekyear % 100 // 10, weekyear % 10, week, dow
         
         def adjustment_to_jan_1_day_of_year(expanded, century, year):
             yby = expanded * 10000 + century * 100 + year - 1
@@ -451,42 +477,65 @@ class isodate():
             jan1dow = 1 + (((((cby // 100) % 4) * 5) + gfac) % 7)
             return {1:0, 2:-1, 3:-2, 4:-3, 5:3, 6:2, 7:1}[jan1dow]
         
+        if refdate is None:
+            refdate = cls.epoc()
+        
         if expanded is None:
-            expanded = 0
+            expanded = refdate.iso_expanded
         if century is None:
-            century = 0
+            century = refdate.iso_century
         if year is None:
-            year = 1
+            year = refdate.iso_year
+        if weekcentury is None:
+            weekcentury = refdate.iso_weekcentury
+        if weekdecade is None:
+            weekdecade = refdate.iso_weekdecade
+        if weekyearofdec is None:
+            weekyearofdec = refdate.iso_weekyearofdec
         
         leap = (year % 4 == 0 and (century != 0 or century % 4 == 0))
         mrangeoff = 3 if not leap else 4
         
-        if dayofyear is None and month is None and weekofyear is None:
-            dayofyear = 1
-        
         if dayofyear is not None:
             if dayofyear < 0 or dayofyear > cls.months[12][mrangeoff][1]:
                 raise ValueError("Day of year ({0}) out of range.".format(dayofyear))
-            month, dayofmonth = month_from_dayofyear(cls, leap, dayofyear)
-            weekyear, weekofyear, dayofweek = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = month_from_dayofyear(cls, leap, dayofyear)
+            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
         
         elif month is not None:
             if dayofmonth is None:
-                dayofmonth = 1
+                dayofmonth = refdate.iso_dayofmonth
             dayofyear = cls.months[month][mrangeoff][0] + dayofmonth - 1
-            weekyear, weekofyear, dayofweek = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = (month, dayofmonth)
+            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
         
+        elif dayofmonth is not None:
+            month = refdate.iso_month
+            dayofyear = cls.months[month][mrangeoff][0] + dayofmonth - 1
+            md = (month, dayofmonth)
+            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+                    
         elif weekofyear is not None:
-            if weekyear is None:
-                weekyear = year
             if dayofweek is None:
-                dayofweek = 1
+                dayofweek = refdate.iso_dayofweek
             adjust = adjustment_to_jan_1_day_of_year(expanded, century, year)
             dayofyear = (weekofyear - 1) * 7 + dayofweek + adjust
-            month, dayofmonth = month_from_dayofyear(cls, leap, dayofyear)
+            md = month_from_dayofyear(cls, leap, dayofyear)
+            cdywd = (weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
         
-        return (expanded, century, year, month, dayofmonth, dayofyear,
-                weekyear, weekofyear, dayofweek)
+        elif dayofweek is not None:
+            weekofyear = refdate.iso_weekofyear
+            adjust = adjustment_to_jan_1_day_of_year(expanded, century, year)
+            dayofyear = (weekofyear - 1) * 7 + dayofweek + adjust
+            md = month_from_dayofyear(cls, leap, dayofyear)
+            cdywd = (weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
+        
+        else:
+            dayofyear = refdate.iso_dayofyear
+            md = month_from_dayofyear(cls, leap, dayofyear)
+            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+        
+        return tuple([expanded, century, year] + list(md) + [dayofyear] + list(cdywd))
     
     
     ###
@@ -504,12 +553,6 @@ class isodate():
             4:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})')],
             2:[ re.compile(r'(?ax)(?P<century>\d{2})')],
         },
-        (False, True):{
-            8:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})')],
-            7:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})W(?P<weekofyear>\d{2})')],
-            6:[ re.compile(r'(?ax)(?P<year>\d{2})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})')],
-            5:[ re.compile(r'(?ax)(?P<year>\d{2})W(?P<weekofyear>\d{2})')]
-        },
         (True, False):{
             10:[re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})-(?P<month>\d{2})-(?P<dayofmonth>\d{2})')],
             8:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})-(?P<dayofyear>\d{3})'),
@@ -517,25 +560,30 @@ class isodate():
             7:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})-(?P<month>\d{2})'),
                 re.compile(r'(?ax)--(?P<month>\d{2})-(?P<dayofmonth>\d{2})')],
             6:[ re.compile(r'(?ax)-(?P<year>\d{2})-(?P<month>\d{2})'),
-                re.compile(r'(?ax)--(?P<month>\d{2})(?P<dayofmonth>\d{2})')],
-            5:[ re.compile(r'(?ax)(?P<year>\d{2})-(?P<dayofyear>\d{3})'),
-                re.compile(r'(?ax)-(?P<year>\d{2})(?P<month>\d{2})'),
+                re.compile(r'(?ax)--(?P<month>\d{2})(?P<dayofmonth>\d{2})'),
+                re.compile(r'(?ax)(?P<year>\d{2})-(?P<dayofyear>\d{3})')],
+            5:[ re.compile(r'(?ax)-(?P<year>\d{2})(?P<month>\d{2})'),
                 re.compile(r'(?ax)---(?P<dayofmonth>\d{2})')],
             4:[ re.compile(r'(?ax)--(?P<month>\d{2})'),
                 re.compile(r'(?ax)-(?P<dayofyear>\d{3})')],
             3:[re.compile(r'(?ax)-(?P<year>\d{2})')]
         },
+        (False, True):{
+            8:[ re.compile(r'(?ax)(?P<weekcentury>\d{2})(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})')],
+            7:[ re.compile(r'(?ax)(?P<weekcentury>\d{2})(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})')],
+            6:[ re.compile(r'(?ax)(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})')],
+            5:[ re.compile(r'(?ax)(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})')]
+        },
         (True, True):{
-            10:[re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})')],
-            
-            8:[ re.compile(r'(?ax)(?P<century>\d{2})(?P<year>\d{2})-W(?P<weekofyear>\d{2})'),
-                re.compile(r'(?ax)(?P<year>\d{2})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})'),
-                re.compile(r'(?ax)-(?P<yearofdec>\d{1})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})')],
-            6:[ re.compile(r'(?ax)(?P<year>\d{2})-W(?P<weekofyear>\d{2})'),
-                re.compile(r'(?ax)-(?P<yearofdec>\d{1})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})'),
-                re.compile(r'(?ax)-(?P<yearofdec>\d{1})-W(?P<weekofyear>\d{2})'),
+            10:[re.compile(r'(?ax)(?P<weekcentury>\d{2})(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})')],
+            8:[ re.compile(r'(?ax)(?P<weekcentury>\d{2})(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})'),
+                re.compile(r'(?ax)(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})'),
+                re.compile(r'(?ax)-(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})')],
+            6:[ re.compile(r'(?ax)(?P<weekdecade>\d{1})(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})'),
+                re.compile(r'(?ax)-(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})'),
+                re.compile(r'(?ax)-(?P<weekyearofdec>\d{1})-W(?P<weekofyear>\d{2})'),
                 re.compile(r'(?ax)-W(?P<weekofyear>\d{2})-(?P<dayofweek>\d{1})')],
-            5:[ re.compile(r'(?ax)-(?P<yearofdec>\d{1})W(?P<weekofyear>\d{2})'),
+            5:[ re.compile(r'(?ax)-(?P<weekyearofdec>\d{1})W(?P<weekofyear>\d{2})'),
                 re.compile(r'(?ax)-W(?P<weekofyear>\d{2})(?P<dayofweek>\d{1})')],
             4:[ re.compile(r'(?ax)-W(?P<weekofyear>\d{2})'),
                 re.compile(r'(?ax)-W-(?P<dayofweek>\d{1})')]
@@ -563,14 +611,22 @@ class isodate():
             value = value[width:]
         rep_type = (('-' in value), ('W' in value))
         if len(value) not in cls.representations[rep_type]:
+            __log__.debug("Type: {0} {1}".format(rep_type, len(value)))
             raise ValueError('Invalid representation "{0}".'.format(value_org))
         for rep_re in cls.representations[rep_type][len(value)]:
             mo = rep_re.match(value)
-            if mo:
-                parts = ["century", "year", "month", "dayofmonth", "dayofyear", "weekofyear", "dayofweek"]
+            if mo and not rep_type[1]:
+                parts = ["century", "year", "month", "dayofmonth", "dayofyear"]
                 parts = [(k, int(mo.groupdict()[k])) for k in parts if k in mo.groupdict()]
-                return cls(expanded=expanded, **dict(parts))
+                parts = dict(parts)
+                return cls(expanded=expanded, **parts)
+            elif mo and rep_type[1]:
+                parts = ["weekcentury", "weekdecade", "weekyearofdec", "weekofyear", "dayofweek"]
+                parts = [(k, int(mo.groupdict()[k])) for k in parts if k in mo.groupdict()]
+                parts = dict(parts)
+                return cls(expanded=expanded, **parts)
         else:
+            __log__.debug("Type: {0} {1}".format(rep_type, len(value)))
             raise ValueError('Invalid representation "{0}".'.format(value_org))
     
     @classmethod
@@ -706,93 +762,25 @@ class isodate():
         self.__implied = value
         if self.__implied:
             # Set all implied values based on the class documentation
-            
-            self.__expanded = self.__orig_expanded
-            if self.__orig_century:
-                self.__century = self.__orig_century
-            else:
-                self.__century = self.__implied.__century
-            if self.__orig_year:
-                self.__year = self.__orig_year
-            else:
-                self.__year = self.__implied.__year
-            
-            self.__dayofyear = None
-            self.__month = None
-            self.__dayofmonth = None
-            self.__weekyear = None
-            self.__weekofyear = None
-            self.__dayofweek = None
-            
-            def set_implied_values(self):
-                (   self.__expanded, self.__century, self.__year,
-                    self.__month, self.__dayofmonth,
-                    self.__dayofyear,
-                    self.__weekyear, self.__weekofyear, self.__dayofweek
-                ) = self.compute_all_fields(
-                        expanded=self.__expanded,
-                        century=self.__century,
-                        year=self.__year,
-                        dayofyear=self.__dayofyear,
-                        month=self.__month,
-                        dayofmonth=self.__dayofmonth,
-                        weekyear=self.__weekyear,
-                        weekofyear=self.__weekofyear,
-                        dayofweek=self.__dayofweek)
-            
-            if self.__orig_dayofyear:
-                self.__dayofyear = self.__orig_dayofyear
-                set_implied_values(self)
-            elif self.__orig_month:
-                self.__month = self.__orig_month
-                if self.__orig_dayofmonth:
-                    self.__dayofmonth = self.__orig_dayofmonth
-                else:
-                    self.__dayofmonth = self.__implied.__dayofmonth
-                set_implied_values(self)
-            elif self.__orig_dayofmonth:
-                self.__dayofmonth = self.__orig_dayofmonth
-                if self.__orig_month:
-                    self.__month = self.__orig_month
-                else:
-                    self.__month = self.__implied.__month
-                set_implied_values(self)
-            elif self.__orig_weekyear:
-                self.__weekyear = self.__orig_weekyear
-                if self.__orig_weekofyear:
-                    self.__weekofyear = self.__orig_weekofyear
-                else:
-                    self.__weekofyear = self.__implied.__weekofyear                    
-                if self.__orig_dayofweek:
-                    self.__dayofweek = self.__orig_dayofweek
-                else:
-                    self.__dayofweek = self.__implied.__dayofweek
-                set_implied_values(self)
-            elif self.__orig_weekofyear:
-                if self.__orig_weekyear:
-                    self.__weekyear = self.__orig_weekyear
-                else:
-                    self.__weekyear = self.__implied.__weekyear
-                self.__weekofyear = self.__orig_weekofyear
-                if self.__orig_dayofweek:
-                    self.__dayofweek = self.__orig_dayofweek
-                else:
-                    self.__dayofweek = self.__implied.__dayofweek
-                set_implied_values(self)
-            elif self.__orig_dayofweek:
-                if self.__orig_weekyear:
-                    self.__weekyear = self.__orig_weekyear
-                else:
-                    self.__weekyear = self.__implied.__weekyear
-                if self.__orig_weekofyear:
-                    self.__weekofyear = self.__orig_weekofyear
-                else:
-                    self.__weekofyear = self.__implied.__weekofyear
-                self.__dayofweek = self.__orig_dayofweek
-                set_implied_values(self)
-            else:
-                self.__dayofyear = self.__implied.__dayofyear
-                set_implied_values(self)
+            (
+                self.__expanded, self.__century, self.__year,
+                self.__month, self.__dayofmonth,
+                self.__dayofyear,
+                self.__weekcentury, self.__weekdecade, self.__weekyearofdec,
+                self.__weekofyear, self.__dayofweek
+            ) = self.compute_all_fields(
+                        expanded=self.__orig_expanded,
+                        century=self.__orig_century,
+                        year=self.__orig_year,
+                        dayofyear=self.__orig_dayofyear,
+                        month=self.__orig_month,
+                        dayofmonth=self.__orig_dayofmonth,
+                        weekcentury=self.__orig_weekcentury,
+                        weekdecade=self.__orig_weekdecade,
+                        weekyearofdec=self.__orig_weekyearofdec,
+                        weekofyear=self.__orig_weekofyear,
+                        dayofweek=self.__orig_dayofweek,
+                        refdate=self.__implied)
         else:
             # This will result in undefined behavior for many methods
             self.__expanded = self.__orig_expanded
@@ -801,7 +789,9 @@ class isodate():
             self.__dayofyear = self.__orig_dayofyear
             self.__month = self.__orig_month
             self.__dayofmonth = self.__orig_dayofmonth
-            self.__weekyear = self.__orig_weekyear
+            self.__weekcentury = self.__orig_weekcentury
+            self.__weekdecade = self.__orig_weekdecade
+            self.__weekyearofdec = self.__orig_weekyearofdec
             self.__weekofyear = self.__orig_weekofyear
             self.__dayofweek = self.__orig_dayofweek
 
@@ -815,7 +805,7 @@ class isodate():
             "expanded", "century", "year",
             "month", "dayofmonth",
             "dayofyear",
-            "weekyear", "weekofyear", "dayofweek",
+            "weekcentury", "weekdecade", "weekyearofdec", "weekofyear", "dayofweek",
         ]
         for name in validate:
             orig = getattr(self, "_isodate__orig_" + name)
@@ -853,16 +843,16 @@ class isodate():
         return self.__dayofyear
     
     @property
-    def iso_weekyear(self):
-        return self.__weekyear
+    def iso_weekcentury(self):
+        return self.__weekcentury
     
     @property
-    def __iso_weekyear100(self):
-        return self.iso_weekyear % 100 if self.iso_weekyear is not None else None
+    def iso_weekdecade(self):
+        return self.__weekdecade
     
     @property
-    def __iso_weekyear10(self):
-        return self.iso_weekyear % 10 if self.iso_weekyear is not None else None
+    def iso_weekyearofdec(self):
+        return self.__weekyearofdec
     
     @property
     def iso_weekofyear(self):
@@ -875,67 +865,67 @@ class isodate():
     #The following is a binary coded key that follows the following pattern:
     # - iso_expanded
     # - iso_century
-    # - iso_year
+    # - iso_year or iso_weekdecade
+    # - iso_year or iso_weekyearofdec
     # - iso_month
     # - iso_day
     # - iso_dayofyear
     # - iso_weekofyear
     # - iso_dayofweek
     # - basic (1) vs extended formatting (0)
-    # - week of year uses year of decade
     code2fmt = {
         #Calendar Formatting
-        0b0110110001:"{0.iso_century:02d}{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
-        0b0110110000:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
-        0b0110100001:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}",
-        0b0110000001:"{0.iso_century:02d}{0.iso_year:02d}",
+        0b0101110001:"{0.iso_century:02d}{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
+        0b0101110000:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
+        0b0101100001:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}",
+        0b0101000001:"{0.iso_century:02d}{0.iso_year:02d}",
         0b0100000001:"{0.iso_century:02d}",
-        0b0010110001:"{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
-        0b0010110000:"{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
-        0b0010100001:"-{0.iso_year:02d}{0.iso_month:02d}",
-        0b0010100000:"-{0.iso_year:02d}-{0.iso_month:02d}",
-        0b0010000001:"-{0.iso_year:02d}",
+        0b0001110001:"{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
+        0b0001110000:"{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
+        0b0001100001:"-{0.iso_year:02d}{0.iso_month:02d}",
+        0b0001100000:"-{0.iso_year:02d}-{0.iso_month:02d}",
+        0b0001000001:"-{0.iso_year:02d}",
         0b0000110001:"--{0.iso_month:02d}{0.iso_dayofmonth:02d}",
         0b0000110000:"--{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
         0b0000100001:"--{0.iso_month:02d}",
         0b0000100000:"--{0.iso_month:02d}",
         0b0000010001:"---{0.iso_dayofmonth:02d}",
-        0b1110110001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
-        0b1110110000:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
-        0b1110100001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}",
-        0b1110000001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}",
+        0b1101110001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}{0.iso_month:02d}{0.iso_dayofmonth:02d}",
+        0b1101110000:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}-{0.iso_dayofmonth:02d}",
+        0b1101100001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_month:02d}",
+        0b1101000001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}",
         0b1100000001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}",
 
         #Ordinal Formatting
-        0b0110001001:"{0.iso_century:02d}{0.iso_year:02d}{0.iso_dayofyear:03d}",
-        0b0110001000:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_dayofyear:03d}",
-        0b0010001001:"{0.iso_year:02d}{0.iso_dayofyear:03d}",
-        0b0010001000:"{0.iso_year:02d}-{0.iso_dayofyear:03d}",
+        0b0101001001:"{0.iso_century:02d}{0.iso_year:02d}{0.iso_dayofyear:03d}",
+        0b0101001000:"{0.iso_century:02d}{0.iso_year:02d}-{0.iso_dayofyear:03d}",
+        0b0001001001:"{0.iso_year:02d}{0.iso_dayofyear:03d}",
+        0b0001001000:"{0.iso_year:02d}-{0.iso_dayofyear:03d}",
         0b0000001001:"-{0.iso_dayofyear:03d}",
-        0b1110001001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}{0.iso_dayofyear:03d}",
-        0b1110001000:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_dayofyear:03d}",
+        0b1101001001:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}{0.iso_dayofyear:03d}",
+        0b1101001000:"{0.iso_expanded:0=+2d}{0.iso_century:02d}{0.iso_year:02d}-{0.iso_dayofyear:03d}",
 
         #Week Formatting
-        0b0111000111:"{0.iso_weekyear:04d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
-        0b0111000110:"{0.iso_weekyear:04d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
-        0b0111000101:"{0.iso_weekyear:04d}W{0.iso_weekofyear:02d}",
-        0b0111000100:"{0.iso_weekyear:04d}-W{0.iso_weekofyear:02d}",
-        0b0011000111:"{0.__iso_weekyear100:02d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
-        0b0011000110:"{0.__iso_weekyear100:02d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
-        0b0011000101:"{0.__iso_weekyear100:02d}W{0.iso_weekofyear:02d}",
-        0b0011000100:"{0.__iso_weekyear100:02d}-W{0.iso_weekofyear:02d}",
-        0b0001000111:"{0.__iso_weekyear10:01d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
-        0b0001000110:"{0.__iso_weekyear10:01d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
-        0b0001000101:"{0.__iso_weekyear10:01d}W{0.iso_weekofyear:02d}",
-        0b0001000100:"{0.__iso_weekyear10:01d}-W{0.iso_weekofyear:02d}",
+        0b0111000111:"{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
+        0b0111000110:"{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
+        0b0111000101:"{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}",
+        0b0111000100:"{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}",
+        0b0011000111:"{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
+        0b0011000110:"{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
+        0b0011000101:"{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}",
+        0b0011000100:"{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}",
+        0b0001000111:"-{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
+        0b0001000110:"-{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
+        0b0001000101:"-{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}",
+        0b0001000100:"-{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}",
         0b0000000111:"-W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
         0b0000000110:"-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
         0b0000000101:"-W{0.iso_weekofyear:02d}",
-        0b0000000011:"{0.iso_dayofweek:01d}",
-        0b1111000111:"{0.iso_expanded:0=+2d}{0.iso_weekyear:04d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
-        0b1111000110:"{0.iso_expanded:0=+2d}{0.iso_weekyear:04d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
-        0b1111000101:"{0.iso_expanded:0=+2d}{0.iso_weekyear:04d}W{0.iso_weekofyear:02d}",
-        0b1111000100:"{0.iso_expanded:0=+2d}{0.iso_weekyear:04d}-W{0.iso_weekofyear:02d}",
+        0b0000000011:"-W-{0.iso_dayofweek:01d}",
+        0b1111000111:"{0.iso_expanded:0=+2d}{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}{0.iso_dayofweek:01d}",
+        0b1111000110:"{0.iso_expanded:0=+2d}{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}-{0.iso_dayofweek:01d}",
+        0b1111000101:"{0.iso_expanded:0=+2d}{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}W{0.iso_weekofyear:02d}",
+        0b1111000100:"{0.iso_expanded:0=+2d}{0.iso_weekcentury:02d}{0.iso_weekdecade:1d}{0.iso_weekyearofdec:1d}-W{0.iso_weekofyear:02d}",
     }
 
     def isoformat(self, representation=CALENDAR, basic=False,
@@ -1031,7 +1021,13 @@ class isodate():
         if not basic and code not in self.code2fmt:
             code = code | 0b0000000001
         if code not in self.code2fmt:
-            __log__.debug("{0:b}".format(code))
+            #print()
+            #print("repr {0:010b}".format(representation))
+            #print("redu {0:010b}".format(reduced[0]))
+            #print("truc {0:010b}".format(truncated[1]))
+            #print("code {0:010b}".format(code))
+            #print("real {0:010b}".format(0b0101100001))
+            __log__.debug("{0:010b}".format(code))
             raise ValueError("Invalid ISO 8601 date representation.")
         fmt = self.code2fmt[code]
         return fmt.format(self)
@@ -1060,29 +1056,17 @@ class isodate():
         c = self.iso_century
         y = self.iso_year
         m = self.iso_month
-        dom = self.iso_dayofmonth
-        doy = self.iso_dayofyear
-        wy = self.iso_weekyear
-        woy = self.iso_weekofyear
-        dow = self.iso_dayofweek
+        d = self.iso_dayofmonth
         if year:
             c = year // 100
             y = year % 100
-            wy = None
         if month:
             m = month
-            doy = None
-            woy = None
-            dow = None
         if day:
-            dom = day
-            doy = None
-            dow = None
-        ret = isodate(expanded=e, century=c, year=y,
-                month=m, dayofmonth=dom,
-                dayofyear=doy,
-                weekyear=wy, weekofyear=woy, dayofweek=dow)
-        return ret
+            d = day
+        fields = self.compute_all_fields(expanded=e, century=c, year=y,
+                month=m, dayofmonth=d)
+        return isodate(*fields)
     
     def timetuple(self):
         return (self.year, self.month, self.day, 0, 0, 0, self.weekday(), self.iso_dayofyear, -1)
@@ -1097,7 +1081,8 @@ class isodate():
         return self.__dayofweek
     
     def isocalendar(self):
-        return (self.__weekyear, self.__weekofyear, self.__dayofweek)
+        return (self.__weekcentury * 100 + self.__weekdecade * 10 + self.__weekyearofdec,
+            self.__weekofyear, self.__dayofweek)
         
     def ctime(self):
         return self.strftime("%a %b %d %H:%M:%S %Y")
