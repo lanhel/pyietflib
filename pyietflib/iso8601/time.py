@@ -162,7 +162,7 @@ class isotime():
             mo = cls.truncated_re.match(value)
         
         if mo is None:
-            raise ValueError("Invalid ISO time representation.")
+            return None
 
         hour = mo.group("hour")
         if hour is not None and hour != '-':

@@ -27,4 +27,58 @@ from .date import *
 #from .recurring import *
 
 
+def parse_iso8601(value):
+    """This will parse an ISO 8601 arbitrary representation and return
+    a list of the component parts.
+    
+    All time representations must have the time designator [T] before
+    the time starts. This is in accordance with ISO 8601 §5.3.1.5
+    where if time is not explicitly specified then the designator is
+    required.
+    
+    Examples
+    --------
+    19660829
+        This will return an isodate object.
+    
+    1966-08-29
+        This will return an isodate object.
+    
+    T05:11:23
+        This will return an isotime object.
+        
+    T051123
+        This will return an isotime object.
+    
+    051123
+        This will return an isodate object even though it is a valid
+        basic format complete representation of time because the
+        time designator [T] is missing.
+    
+    19660829T052436
+        This will return an isodatetime object.
+    
+    P1Y2M15DT12H30M0S
+        This will return an isoduration object.
+    
+    19660829/P1Y2M15DT12H30M0S
+        This will return an isodat object and an isoduration object.
+    
+    P1Y2M15DT12H30M0S/19660829
+        This will return an isoduration object and an isodate object.
+    """
+    ret = []
+    for p in value.split('/'):
+        if p.startswith('P'):
+            ret.append(isoduration(p))
+        elif p.startswith('R'):
+            ret.append(isorecur(p))
+        elif p.startswith('T'):
+            ret.append(isotime(p))
+        elif 'T' in p:
+            ret.append(isodatetime(p))
+        else:
+            ret.append(isodate(p))
+    return ret
+
 
