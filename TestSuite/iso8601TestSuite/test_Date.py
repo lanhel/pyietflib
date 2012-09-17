@@ -57,11 +57,13 @@ class TestDateCalendar(unittest.TestCase):
             self.assertEqual("{0:02d}{1:02d}{2:02d}{3:02d}".format(t_century, t_year, t_month, t_dayofmonth), bdate.isoformat(basic=True))
         
         self.assertEqual(basic, bdate.isoformat(representation=CALENDAR,
-                reduced=reduced, truncated=truncated, basic=True))
+                reduced=reduced, truncated=truncated, basic=True,
+                expanded=(expanded is not None)))
         
         if extended:
             self.assertEqual(extended, bdate.isoformat(representation=CALENDAR,
-                    reduced=reduced, truncated=truncated, basic=False))
+                    reduced=reduced, truncated=truncated, basic=False,
+                    expanded=(expanded is not None)))
             bdate = isodate.parse_iso(basic, expand_digits=expand_len)
             self.assertEqual(bdate, isodate.parse_iso(extended, expand_digits=expand_len))
     
@@ -145,6 +147,20 @@ class TestDateCalendar(unittest.TestCase):
         self.assertEqual("1966W351", test.isoformat(representation=WEEK, basic=True))
         self.assertEqual("Mon Aug 29 00:00:00 1966", test.ctime())
         self.assertEqual("Mon Aug 29 00:00:00 1966", test.strftime("%a %b %d %H:%M:%S %Y"))
+        
+        self.assertEqual("1966-08-29", str(test))
+        self.assertEqual(b"\x00\x13\x42\x08\x1d", bytes(test))
+        self.assertEqual("1966-08-29", "{0}".format(test))
+        self.assertEqual("1966-08-29", "{0:s}".format(test))
+        self.assertEqual("    19660829", "{0:12c}".format(test))
+        self.assertEqual("  1966-08-29", "{0:>#12c}".format(test))
+        self.assertEqual("19660829    ", "{0:<12c}".format(test))
+        self.assertEqual("  19660829  ", "{0:^12c}".format(test))
+        self.assertEqual("  1966-08-29 ", "{0:^#13c}".format(test))
+        self.assertEqual("196608", "{0:.6c}".format(test))
+        self.assertEqual("+019660829", "{0:-c}".format(test))
+        self.assertEqual("1966241", "{0:o}".format(test))
+        self.assertEqual("1966W351", "{0:w}".format(test))
         
         testadd = test + datetime.timedelta(days=1)
         self.assertEqual(19, testadd.iso_century)
@@ -271,11 +287,13 @@ class TestDateOrdinal(unittest.TestCase):
         self.assertEqual(t_dayofyear, bdate.iso_dayofyear)
                 
         self.assertEqual(basic, bdate.isoformat(representation=ORDINAL,
-                reduced=reduced, truncated=truncated, basic=True))
+                reduced=reduced, truncated=truncated, basic=True,
+                expanded=(expanded is not None)))
         
         if extended:
             self.assertEqual(extended, bdate.isoformat(representation=ORDINAL,
-                    reduced=reduced, truncated=truncated, basic=False))
+                    reduced=reduced, truncated=truncated, basic=False,
+                    expanded=(expanded is not None)))
             bdate = isodate.parse_iso(basic, expand_digits=expand_len)
             self.assertEqual(bdate, isodate.parse_iso(extended, expand_digits=expand_len))
 
@@ -323,11 +341,13 @@ class TestDateWeek(unittest.TestCase):
         self.assertEqual(t_dayofweek , bdate.iso_dayofweek )
                 
         self.assertEqual(basic, bdate.isoformat(representation=WEEK,
-                reduced=reduced, truncated=truncated, basic=True))
+                reduced=reduced, truncated=truncated, basic=True,
+                expanded=(expanded is not None)))
         
         if extended:
             self.assertEqual(extended, bdate.isoformat(representation=WEEK,
-                    reduced=reduced, truncated=truncated, basic=False))
+                    reduced=reduced, truncated=truncated, basic=False,
+                    expanded=(expanded is not None)))
             bdate = isodate.parse_iso(basic, expand_digits=expand_len)
             self.assertEqual(bdate, isodate.parse_iso(extended, expand_digits=expand_len))
 

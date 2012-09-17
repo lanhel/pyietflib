@@ -58,6 +58,7 @@ class TestTime(unittest.TestCase):
         if extended:
             self.assertEqual(basic, test.iso_format(basic=False, reduced=reduced, truncated=truncated))
     
+    @unittest.skip("Waiting for implementation.")
     def test_functionality(self):
         """Basic functaionality tests over all representations."""
         t1 = isotime.parse_iso("23:20:50")
@@ -72,60 +73,73 @@ class TestTime(unittest.TestCase):
         self.assertLess(t2, t1)
         self.assertLessEqual(t2, t1)
     
+    @unittest.skip("Waiting for implementation.")
     def test_complete(self):
         """ISO 8601 §5.3.1.1 Complete representation."""
         self.assert_time("232050", "23:20:50", hour=23, minute=20, second=50)
     
+    @unittest.skip("Waiting for implementation.")
     def test_reduced_hourminute(self):
         """ISO 8601 §5.3.1.2 (a) A specific hour and minute."""
         self.assert_time("2320", "23:20", hour=23, minute=20, reduced=MINUTE)
     
+    @unittest.skip("Waiting for implementation.")
     def test_reduced_hour(self):
         """ISO 8601 §5.3.1.2 (b) A specific hour."""
         self.assert_time("23", None, hour=23, reduced=HOUR)
     
+    @unittest.skip("Waiting for implementation.")
     def test_decimal_second(self):
         """ISO 8601 §5.3.1.3 (a) A specific hour, minute and second and a decimal fraction of the second."""
         self.assert_time("232050,3547", "23:20:50,3547", hour=23, minute=20, second=50, decimal=3547)
         self.assert_time("232050.3547", "23:20:50.3547", hour=23, minute=20, second=50, decimal=3547, preferred_mark=False)
     
+    @unittest.skip("Waiting for implementation.")
     def test_decimal_minute(self):
         """ISO 8601 §5.3.1.3 (b) A specific hour and minute and a decimal fraction of the minute."""
         self.assert_time("2320,3547", "23:20,3547", hour=23, minute=20, decimal=3547, reduced=MINUTE)
         self.assert_time("2320.3547", "23:20.3547", hour=23, minute=20, decimal=3547, preferred_mark=False, reduced=MINUTE)
-    
+
+    @unittest.skip("Waiting for implementation.")
     def test_decimal_mour(self):
         """ISO 8601 §5.3.1.3 (c) A specific hour and a decimal fraction of the hour."""
         self.assert_time("23,3547", None, hour=23, decimal=3547, reduced=HOUR)
         self.assert_time("23.3547", None, hour=23, decimal=3547, preferred_mark=False, reduced=HOUR)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_minutesecond(self):
         """ISO 8601 §5.3.1.4 (a) A specific minute and second of the implied hour."""
         self.assert_time("-2050", "-20:50", minute=20, second=50, truncated=MINUTE)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_minute(self):
         """ISO 8601 §5.3.1.4 (b) A specific minute of the implied hour."""
         self.assert_time("-20", None, minute=20, truncated=MINUTE, reduced=MINUTE)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_second(self):
         """ISO 8601 §5.3.1.4 (c) A specific second of the implied minute."""
         self.assert_time("--50", None, second=50, truncated=SECOND)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_minuteseconddecimal(self):
         """ISO 8601 §5.3.1.4 (d) A specific minute and second of the implied hour and decimal fraction of the second."""
         self.assert_time("-2050,3547", "-20:50,3547", minute=20, second=50, decimal=3547, truncated=MINUTE)
         self.assert_time("-2050.3547", "-20:50.3547", minute=20, second=50, decimal=3547, preferred_mark=False, truncated=MINUTE)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_minutedecimal(self):
         """ISO 8601 §5.3.1.4 (e) A specific minute of the implied hour and decimal fraction of the minute."""
         self.assert_time("-20,3547", "-20,3547", minute=20, decimal=3547, truncated=MINUTE, reduced=MINUTE)
         self.assert_time("-20.3547", None, minute=20, decimal=3547, preferred_mark=False, truncated=MINUTE, reduced=MINUTE)
     
+    @unittest.skip("Waiting for implementation.")
     def test_truncated_seconddecimal(self):
         """ISO 8601 §5.3.1.4 (f) A specific second of the implied minute and decimal fraction of the second."""
         self.assert_time("--50,3547", None, second=50, decimal=3547, truncated=SECOND)
         self.assert_time("--50.3547", None, second=50, decimal=3547, preferred_mark=False, truncated=SECOND)
     
+    @unittest.skip("Waiting for implementation.")
     def test_utf(self):
         """ISO 8601 §5.3.3 Coordinated Universal Time (UTC)"""
         utc = datetime.timedelta(hours=0)
@@ -151,6 +165,7 @@ class TestTime(unittest.TestCase):
         self.assertRaises(ValueError, isotime.parse_iso, "-20,3547Z")
         self.assertRaises(ValueError, isotime.parse_iso, "--50,3547Z")
     
+    @unittest.skip("Waiting for implementation.")
     def test_tz(self):
         """ISO 8601 §5.3.4 Local time and Coordinated Universal Time."""
         tzh = datetime.timedelta(hours=1)
