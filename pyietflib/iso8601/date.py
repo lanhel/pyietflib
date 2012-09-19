@@ -309,8 +309,8 @@ class isodate():
             If this is '+' or '-' then the expanded representation is used.
     
         #
-            The extended format is used for all representations if
-            applicable. The normal representation is basic format.
+            The normal format is to use extended unless not applicable
+            then use basic. This will force all representations to basic.
     
         0
             This is not allowed because '=' align is not allowed.
@@ -781,7 +781,7 @@ class isodate():
             raise ValueError("Comma not allowed in isodate format specifier.")
         
         expanded = (mo.group("sign") is not None)
-        basic = (mo.group("altform") is None)
+        basic = (mo.group("altform") is not None)
         ftype = mo.group("type")
         if ftype is None:
             ret = str(self)

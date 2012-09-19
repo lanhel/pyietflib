@@ -62,7 +62,7 @@ def parse_iso8601(value):
         This will return an isoduration object.
     
     19660829/P1Y2M15DT12H30M0S
-        This will return an isodat object and an isoduration object.
+        This will return an isodate object and an isoduration object.
     
     P1Y2M15DT12H30M0S/19660829
         This will return an isoduration object and an isodate object.

@@ -36,9 +36,9 @@ __all__ = ['isotime',
     ]
 __log__ = logging.getLogger("iso8601")
 
-HOUR    = (0b100, 0b111)
-MINUTE  = (0b110, 0b011)
-SECOND  = (0b111, 0b001)
+HOUR    = (0b10011, 0b11111)
+MINUTE  = (0b11011, 0b01111)
+SECOND  = (0b11111, 0b00111)
 
 
 class isotime():
@@ -94,6 +94,50 @@ class isotime():
 
         int
             This will return the ordinal number of days from 1 Jan 0001.
+
+    
+    Format Specifier
+    ----------------
+    The following are `isotime` specific `format_spec` symantics for use
+    with string formatting:
+        fill
+            The fill character, if `None` this defaults to space.
+    
+        align
+            May use the '<', '>', or '^' alignment operator.
+    
+        sign
+            This is not allowed.
+    
+        #
+            The normal format is to use extended unless not applicable
+            then use basic. This will force all representations to basic.
+    
+        0
+            This is not allowed because '=' align is not allowed.
+    
+        width
+            The width of the field.
+    
+        ,
+            This indicates that the preferred fraction separator [,]
+            should be used instead of [.].
+    
+        precision
+            This representation will be shortened to this length.
+        
+            .. WARNING::
+                Use of precision could result in an invalid ISO 8601
+                reduced precision representation.
+    
+        type
+            s
+                This results in the representation as `str(x)`, but
+                with modifiers as documented.
+    
+    It is possible to generate reduced precision dates with format, but
+    it is not possible to generate truncated representations.
+    
     """
     def __init__(self, hour=None, minute=None, second=None, microsecond=None,
             tzinfo=None):
@@ -167,10 +211,14 @@ class isotime():
         hour = mo.group("hour")
         if hour is not None and hour != '-':
             hour = int(hour)
+        else:
+            hour = None
         
         minute = mo.group("minute")
         if minute is not None and minute != '-':
             minute = int(minute)
+        else:
+            minute = None
 
         second = mo.group("second")
         if second is not None:
@@ -190,11 +238,11 @@ class isotime():
         
         if mo.group("utc") == 'Z':
             tzinfo = datetime.timezone.utc
-        elif mo.group("tzsign") is not None:
-            offh = int(mo.group("tzhour"))
+        elif mo.group("tzsign"):
+            offh = int(mo.group("tzhour")) if mo.group("tzhour") else 0
             if mo.group("tzsign") == '-':
                 offh = offh * -1
-            offm = int(mo.group("tzmin")) if mo.group("tzmin") is not None else 0
+            offm = int(mo.group("tzmin")) if mo.group("tzmin") else 0
             td = datetime.timedelta(hours=offh, minutes=offm)
             tzinfo = datetime.timezone(td)
         else:
@@ -203,7 +251,7 @@ class isotime():
         return isotime(hour, minute, second, microsecond, tzinfo)
     
     def __repr__(self):
-        """This includes all the implied values to recrate this object as
+        """This includes all the implied values to recreate this object as
         it stands."""
         fmt = []
         fmt.append("hour={0.hour:d}")
@@ -222,7 +270,14 @@ class isotime():
 
     def __bytes__(self):
         if self.__bytes is None:
-            raise NotImplementedError()
+            us2, us3 = divmod(self.microsecond, 256)
+            us1, us2 = divmod(us2, 256)
+            buf = [self.hour, self.minute, self.second,
+                us1, us2, us3]
+            if self.tzinfo:
+                tzoff = self.tzinfo.utcoffset(self).total_seconds() // 60
+                buf.extend(divmod(tzoff, 60))
+            self.__bytes = bytes(buf)
         return self.__bytes
 
     __format_re = re.compile(r"""(?ax)^
@@ -241,7 +296,7 @@ class isotime():
             raise ValueError("Sign not allowed in isodate format specifier.")
 
         preferred_mark = (mo.group("comma") is not None)
-        basic = (mo.group("altform") is None)
+        basic = (mo.group("altform") is not None)
         ftype = mo.group("type")
         if ftype is None:
             ret = str(self)
@@ -324,14 +379,29 @@ class isotime():
     
     def __float__(self):
         return self.hour * 3600 + self.minute * 60 + self.second + self.microsecond / 1000000
+    
+    def __getstate__(self):
+        return bytes(self)
+
+    def __setstate__(self, state):
+        if len(state) == 6:
+            hour, minute, second, us1, us2, us3 = state
+            tzh = tzm = None
+        elif len(state) == 8:
+            hour, minute, second, us1, us2, us3, tzh, tzm = state
+        else:
+            raise TypeError("Not enough arguments.")
         
-    def __add__(self, other):
-        raise NotImplementedError()
-
-    __radd__ = __add__
-
-    def __sub__(self, other):
-        raise NotImplementedError()
+        self.__orig_hour = hour
+        self.__orig_minute = minute
+        self.__orig_second = second
+        self.__orig_microsecond = (us1 * 256 + us2) * 256 + us3
+        if tzh is not None:
+            td = datetime.timedelta(hours=tzh, minutes=tzm)
+            self.__orig_tzinfo = datetime.timezone(td)
+        else:
+            self.__orig_tzinfo = None
+        self.iso_implied = None
 
     @property
     def iso_implied(self):
@@ -366,57 +436,211 @@ class isotime():
         self.__hour = self.__orig_hour if self.__orig_hour is not None else value.hour
         self.__minute = self.__orig_minute if self.__orig_minute is not None else value.minute
         self.__second = self.__orig_second if self.__orig_second is not None else value.second
-        self.__microsecond = self.__orig_microsecond if self.__orig_microsecond is not None else value.microsecond
+        self.__microsecond = self.__orig_microsecond if self.__orig_microsecond is not None else 0
         self.__tzinfo = self.__orig_tzinfo if self.__orig_tzinfo is not None else value.tzinfo
         self.__bytes = None
     
     @property
-    def min(self):
-        raise NotImplementedError()
-    
-    @property
-    def max(self):
-        raise NotImplementedError()
-    
-    @property
-    def resolution(self):
-        raise NotImplementedError()
-    
-    @property
     def hour(self):
-        raise NotImplementedError()
+        return self.__hour
     
     @property
     def minute(self):
-        raise NotImplementedError()
+        return self.__minute
     
     @property
     def second(self):
-        raise NotImplementedError()
+        return self.__second
     
     @property
     def microsecond(self):
-        raise NotImplementedError()
+        return self.__microsecond
     
     @property
     def tzinfo(self):
-        raise NotImplementedError()
+        return self.__tzinfo
     
     def replace(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None):
         raise NotImplementedError()
     
-    def isoformat(self):
-        raise NotImplementedError()
+    code2fmt = {
+        # 5.3.1.1
+        0b11101:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.0s}{2}",
+        0b11100:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.0s}{2}",
+        
+        # 5.3.1.2
+        0b11001:"{0.hour:02d}{0.minute:02d}{1:.0s}{2}",
+        0b11000:"{0.hour:02d}:{0.minute:02d}{1:.0s}{2}",
+        0b10001:"{0.hour:02d}{1:.0s}{2}",
+        
+        # 5.3.1.3
+        0b11111:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.7s}{2}",
+        0b11110:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.7s}{2}",
+        0b11011:"{0.hour:02d}{0.minute:02d}{1:.8s}{2}",
+        0b11010:"{0.hour:02d}:{0.minute:02d}{1:.9s}{2}",
+        0b10011:"{0.hour:02d}{0.fraction:.11s}{2}",
+        
+        # 5.3.1.4
+        0b01101:"-{0.minute:02d}{0.second:02d}{1:.0s}{2:.0s}",
+        0b01100:"-{0.minute:02d}:{0.second:02d}{1:.0s}{2:.0s}",
+        0b01001:"-{0.minute:02d}{1:.0s}{2:.0s}",
+        0b00101:"--{0.second:02d}{1:.0s}{2:.0s}",
+        0b01111:"-{0.minute:02d}{0.second:02d}{1:.7s}{2:.0s}",
+        0b01110:"-{0.minute:02d}:{0.second:02d}{1:.7s}{2:.0s}",
+        0b01011:"-{0.minute:02d}{1:.9s}{2:.0s}",
+        0b00111:"--{0.second:02d}{1:.7s}{2:.0s}",
+    }
+    
+    def isoformat(self, basic=False, reduced=None, truncated=None, fraction=True,
+                preferred_mark=False, timezone=True):
+        """Return a string representing the time in ISO 8601 format.
+
+        If `basic` is true then the [:](colon) is ommitted from the
+        representation, otherwise (default) it will separate the parts
+        of the representation.
+        
+        For reduced precision set `reduced` to the last part to include
+        (`None` means no reduced precision):
+            - `SECOND` for a complete representation §5.3.1.1.
+            - `MINUTE` for a specific minute §5.3.1.2 (a).
+            - `HOUR` for a specific hour §5.3.1.2 (b).
+        
+        For truncated representations set `truncated` to the first part
+        to include (`None` means no truncation):
+            - `HOUR` for a complete representation §5.3.1.1.
+            
+            - `MINUTE` for an implied hour §5.3.1.4 (a).
+                - `reduced=MINUTE` for specific minute §5.3.1.4 (b)
+            
+            - `SECOND` for an implied minute §5.3.1.4 (c).
+        
+        The fraction will always be shown unless `fraction` is set to
+        false. So if a reduced precision is chosen then the fraction of
+        that precision will be added (e.g. if HOUR is chosen then the
+        fractions of the hour will be added).
+        
+        When a fraction is added the mark will be a period [.], but the
+        `preferred_mark` according to ISO 8601 is a comma [,].
+        
+        If the `tzinfo` is available then it will be added to the
+        representation unless `timezone` is set to false. If `tzinfo` is
+        UTC then [Z] will be added instead of [+00:00].
+        
+        This will duck type to `datetime.date.isoformat()` if called with
+        no arguments.
+        """
+        if reduced is None:
+            reduced = (0b11101, 0b11101)
+        if truncated is None:
+            truncated = (0b11101, 0b11101)
+
+        if fraction:
+            fraction = ""
+            if truncated[1] & 0b01100 == 0:
+                fraction = (self.minute * 60 + self.second) * 1000000 + self.microsecond
+                fraction = "{0:010d}".format(fraction)
+            elif truncated[1] & 0b00100 == 0:
+                fraction = self.second * 1000000 + self.microsecond
+                fraction = "{0:08d}".format(fraction)
+            elif truncated[1] & 0b00000 == 0:
+                fraction = self.microsecond
+                fraction = "{0:06d}".format(fraction)
+            
+            if preferred_mark:
+                fraction = ',' + fraction
+            else:
+                fraction = '.' + fraction
+        else:
+            fraction = ""
+        
+        code = reduced[0] & truncated[1]
+        if not basic:
+            code = code & 0b11110
+        if fraction and self.microsecond > 0:
+            code = code | 0b00010
+        if not basic and code not in self.code2fmt:
+            code = code | 0b00001
+        #print()
+        #print("redu {0:05b}".format(reduced[0]))
+        #print("truc {0:05b}".format(truncated[1]))
+        #print("code {0:05b}".format(code))
+        #print("real {0:05b}".format(0b11101))
+        if code not in self.code2fmt:
+            __log__.debug("{0:05b}".format(code))
+            raise ValueError("Invalid ISO 8601 time representation.")
+
+        if timezone and self.tzinfo:
+            mst = datetime.timezone(datetime.timedelta(hours=-7, minutes=30))
+            utc = datetime.timezone.utc
+            dt = datetime.datetime(1966, 8, 29, 00, 35, 54, tzinfo=mst)
+            tzinfo = mst
+            td = tzinfo.utcoffset(None)
+            tzhour, tzminute = divmod(td.seconds // 60, 60)
+            if tzhour > 12:
+                tzhour -= 24
+
+            if code & 0b00001:
+                tzone = "{0:+03d}{1:02d}".format(tzhour, tzminute)
+            else:
+                tzone = "{0:+03d}:{1:02d}".format(tzhour, tzminute)
+        else:
+            tzone = ""
+        
+        fmt = self.code2fmt[code]
+        ret = fmt.format(self, fraction, tzone)
+        if fraction and self.microsecond > 0:
+            while ret.endswith('0'):
+                ret = ret[:-1]
+        return ret
+        
     
     def strftime(self, format):
-        raise NotImplementedError()
+        tt = (1900, 1, 1, self.hour, self.minute, self.second, 0, 1, -1)
+        return time.strftime(format, tt)
         
     def utcoffset(self):
-        raise NotImplementedError()
-    
-    def dst(self):
-        raise NotImplementedError()
+        if self._tzinfo is None:
+            return None
+        offset = self._tzinfo.utcoffset(None)
+        self.__check_utc_offset("utcoffset", offset)
+        return offset
     
     def tzname(self):
-        raise NotImplementedError()
+        if self._tzinfo is None:
+            return None
+        name = self._tzinfo.tzname(None)
+        self.__check_tzname(name)
+        return name
     
+    def dst(self):
+        if self._tzinfo is None:
+            return None
+        offset = self._tzinfo.dst(None)
+        self.__check_utc_offset("dst", offset)
+        return offset
+
+    def __check_utc_offset(self, name, offset):
+        assert name in ("utcoffset", "dst")
+        if offset is None:
+            return
+        if not isinstance(offset, timedelta):
+            raise TypeError("tzinfo.%s() must return None "
+                            "or timedelta, not '%s'" % (name, type(offset)))
+        if offset % timedelta(minutes=1) or offset.microseconds:
+            raise ValueError("tzinfo.%s() must return a whole number "
+                             "of minutes, got %s" % (name, offset))
+        if not -timedelta(1) < offset < timedelta(1):
+            raise ValueError("%s()=%s, must be must be strictly between"
+                             " -timedelta(hours=24) and timedelta(hours=24)"
+                             % (name, offset))
+
+    def __check_tzname(self, name):
+        if name is not None and not isinstance(name, str):
+            raise TypeError("tzinfo.tzname() must return None or string, "
+                            "not '%s'" % type(name))
+
+
+isotime.min = isotime(0, 0, 0)
+isotime.max = isotime(23, 59, 59, 999999)
+isotime.resolution = datetime.timedelta(microseconds=1)
+
