@@ -583,7 +583,7 @@ class isotime():
             
             if tzhour == 0 and tzminute == 0:
                 tzone = "Z"
-            elif code & 0b00001:
+            elif basic: #code & 0b00001:
                 tzone = "{0:+03d}{1:02d}".format(tzhour, tzminute)
             else:
                 tzone = "{0:+03d}:{1:02d}".format(tzhour, tzminute)
