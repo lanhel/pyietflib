@@ -21,6 +21,7 @@ limitations under the License.
 __docformat__ = "reStructuredText en"
 
 import datetime
+import math
 import unittest
 
 from pyietflib.iso8601 import *
@@ -30,30 +31,47 @@ class TestTime(unittest.TestCase):
     
     def assert_time(self, basic, extended, reduced=None, truncated=None,
             hour=None, minute=None, second=None,
-            decimal=None, preferred_mark=True,
+            microsecond=None, preferred_mark=True,
             tz=None):
 
         test = isotime.parse_iso(basic)
         
         if hour is None:
             hour = test.iso_implied.hour
+        elif isinstance(hour, float):
+            self.assertIsNone(minute)
+            minute = math.fmod(hour, 1) * 60
+            hour = math.floor(hour)
+        
         if minute is None:
             minute = test.iso_implied.minute
+        elif isinstance(minute, float):
+            self.assertIsNone(second)
+            second = math.fmod(minute, 1) * 60
+            minute = math.floor(minute)
+
         if second is None:
             second = test.iso_implied.second
-        if decimal is None:
-            decimal = test.iso_implied.microsecond
+        elif isinstance(second, float):
+            self.assertIsNone(microsecond)
+            microsecond = math.fmod(second, 1) * 1000000
+            second = math.floor(second)
+
+        if microsecond is None:
+            microsecond = test.iso_implied.microsecond
+        elif isinstance(microsecond, float):
+            microsecond = math.floor(microsecond)
         
         self.assertEqual(hour, test.hour)
         self.assertEqual(minute, test.minute)
         self.assertEqual(second, test.second)
-        self.assertEqual(decimal, test.microsecond)
+        self.assertEqual(microsecond, test.microsecond)
         #self.assertEqual(tz, test.tzinfo)
         
         fmt = "{0:02d}:{1:02d}:{2:02d}"
-        if decimal:
+        if microsecond:
             fmt = fmt + ".{3:06d}"
-        isostr = fmt.format(hour, minute, second, decimal)
+        isostr = fmt.format(hour, minute, second, microsecond)
         while isostr.endswith('0') and '.' in isostr:
             isostr = isostr[:-1]
         if isostr.endswith('.'):
@@ -66,7 +84,7 @@ class TestTime(unittest.TestCase):
                 tzfmt = "{4:+2d}"
             else:
                 tzfmt = "{4:+2d}:{5:2d}"
-            isostr = isostr + tzfmt(tz.total_seconds() // 60 // 60,
+            isostr = isostr + tzfmt.format(tz.total_seconds() // 60 // 60,
                     tz.total_seconds() // 60 % 60)
         
         self.assertEqual(isostr, str(test))
@@ -122,20 +140,18 @@ class TestTime(unittest.TestCase):
     
     def test_decimal_second(self):
         """ISO 8601 §5.3.1.3 (a) A specific hour, minute and second and a decimal fraction of the second."""
-        self.assert_time("232050,3547", "23:20:50,3547", hour=23, minute=20, second=50, decimal=354700)
-        self.assert_time("232050.3547", "23:20:50.3547", hour=23, minute=20, second=50, decimal=354700, preferred_mark=False)
+        self.assert_time("232050,3547", "23:20:50,3547", hour=23, minute=20, second=50, microsecond=354700)
+        self.assert_time("232050.3547", "23:20:50.3547", hour=23, minute=20, second=50, microsecond=354700, preferred_mark=False)
     
-    @unittest.skip("Waiting for implementation.")
     def test_decimal_minute(self):
         """ISO 8601 §5.3.1.3 (b) A specific hour and minute and a decimal fraction of the minute."""
-        self.assert_time("2320,3547", "23:20,3547", hour=23, minute=20, decimal=354700, reduced=MINUTE)
-        self.assert_time("2320.3547", "23:20.3547", hour=23, minute=20, decimal=354700, preferred_mark=False, reduced=MINUTE)
+        self.assert_time("2320,3547", "23:20,3547", hour=23, minute=20.3547, reduced=MINUTE)
+        self.assert_time("2320.3547", "23:20.3547", hour=23, minute=20.3547, preferred_mark=False, reduced=MINUTE)
 
-    @unittest.skip("Waiting for implementation.")
     def test_decimal_mour(self):
         """ISO 8601 §5.3.1.3 (c) A specific hour and a decimal fraction of the hour."""
-        self.assert_time("23,3547", None, hour=23, decimal=354700, reduced=HOUR)
-        self.assert_time("23.3547", None, hour=23, decimal=354700, preferred_mark=False, reduced=HOUR)
+        self.assert_time("23,3547", None, hour=23.3547, reduced=HOUR)
+        self.assert_time("23.3547", None, hour=23.3547, preferred_mark=False, reduced=HOUR)
     
     def test_truncated_minutesecond(self):
         """ISO 8601 §5.3.1.4 (a) A specific minute and second of the implied hour."""
@@ -150,37 +166,34 @@ class TestTime(unittest.TestCase):
         """ISO 8601 §5.3.1.4 (c) A specific second of the implied minute."""
         self.assert_time("--50", None, second=50, truncated=SECOND)
     
-    @unittest.skip("Waiting for implementation.")
     def test_truncated_minuteseconddecimal(self):
         """ISO 8601 §5.3.1.4 (d) A specific minute and second of the implied hour and decimal fraction of the second."""
-        self.assert_time("-2050,3547", "-20:50,3547", minute=20, second=50, decimal=354700, truncated=MINUTE)
-        self.assert_time("-2050.3547", "-20:50.3547", minute=20, second=50, decimal=354700, preferred_mark=False, truncated=MINUTE)
+        self.assert_time("-2050,3547", "-20:50,3547", minute=20, second=50, microsecond=354700, truncated=MINUTE)
+        self.assert_time("-2050.3547", "-20:50.3547", minute=20, second=50, microsecond=354700, truncated=MINUTE, preferred_mark=False)
     
-    @unittest.skip("Waiting for implementation.")
     def test_truncated_minutedecimal(self):
         """ISO 8601 §5.3.1.4 (e) A specific minute of the implied hour and decimal fraction of the minute."""
-        self.assert_time("-20,3547", "-20,3547", minute=20, decimal=354700, truncated=MINUTE, reduced=MINUTE)
-        self.assert_time("-20.3547", None, minute=20, decimal=354700, preferred_mark=False, truncated=MINUTE, reduced=MINUTE)
+        self.assert_time("-20,3547", "-20,3547", minute=20.3547, truncated=MINUTE, reduced=MINUTE)
+        self.assert_time("-20.3547", None,       minute=20.3547, truncated=MINUTE, reduced=MINUTE, preferred_mark=False)
     
     def test_truncated_seconddecimal(self):
         """ISO 8601 §5.3.1.4 (f) A specific second of the implied minute and decimal fraction of the second."""
-        self.assert_time("--50,3547", None, second=50, decimal=354700, truncated=SECOND)
-        self.assert_time("--50.3547", None, second=50, decimal=354700, preferred_mark=False, truncated=SECOND)
+        self.assert_time("--50,3547", None, second=50, microsecond=354700, truncated=SECOND)
+        self.assert_time("--50.3547", None, second=50, microsecond=354700, truncated=SECOND, preferred_mark=False)
     
-    @unittest.skip("Waiting for implementation.")
-    def test_utf(self):
+    def test_utc(self):
         """ISO 8601 §5.3.3 Coordinated Universal Time (UTC)"""
         utc = datetime.timedelta(hours=0)
         
         self.assert_time("232050Z", "23:20:50Z", hour=23, minute=20, second=50, tz=utc)
         self.assert_time("2320Z", "23:20Z", hour=23, minute=20, tz=utc, reduced=MINUTE)
         self.assert_time("23Z", None, hour=23, tz=utc, reduced=HOUR)
-        self.assert_time("232050,3547Z", "23:20:50,3547Z", hour=23, minute=20, second=50, decimal=354700, tz=utc)
-        self.assert_time("232050.3547Z", "23:20:50.3547Z", hour=23, minute=20, second=50, decimal=354700, preferred_mark=False, tz=utc)
-        self.assert_time("2320,3547Z", "23:20,3547Z", hour=23, minute=20, decimal=354700, tz=utc, reduced=MINUTE)
-        self.assert_time("2320.3547Z", "23:20.3547Z", hour=23, minute=20, decimal=354700, preferred_mark=False, tz=utc, reduced=MINUTE)
-        self.assert_time("23,3547Z", None, hour=23, decimal=354700, tz=utc, reduced=HOUR)
-        self.assert_time("23.3547Z", None, hour=23, decimal=354700, preferred_mark=False, tz=utc, reduced=HOUR)
+        self.assert_time("232050,3547Z", "23:20:50,3547Z", hour=23, minute=20, second=50, microsecond=354700, tz=utc)
+        self.assert_time("232050.3547Z", "23:20:50.3547Z", hour=23, minute=20, second=50, microsecond=354700, tz=utc, preferred_mark=False)
+        self.assert_time("2320,3547Z", "23:20,3547Z", hour=23, minute=20.3547, tz=utc, reduced=MINUTE)
+        self.assert_time("2320.3547Z", "23:20.3547Z", hour=23, minute=20.3547, tz=utc, reduced=MINUTE, preferred_mark=False)
+        self.assert_time("23,3547Z", None, hour=23.3547, tz=utc, reduced=HOUR)
+        self.assert_time("23.3547Z", None, hour=23.3547, tz=utc, reduced=HOUR, preferred_mark=False)
         
         self.assertRaises(ValueError, isotime.parse_iso, "-2050Z")
         self.assertRaises(ValueError, isotime.parse_iso, "-20:50Z")
@@ -201,18 +214,18 @@ class TestTime(unittest.TestCase):
         
         self.assert_time("232050+0127", "23:20:50+01:27", hour=23, minute=20, second=50, tz=tzm)
         self.assert_time("232050+01", "23:20:50+01", hour=23, minute=20, second=50, tz=tzh)
-        self.assert_time("232050,3547+0127", "23:20:50,3547+01:27", hour=23, minute=20, second=50, decimal=354700, tz=tzm)
-        self.assert_time("232050.3547+01", "23:20:50.3547+01", hour=23, minute=20, second=50, decimal=354700, preferred_mark=False, tz=tzh)
+        self.assert_time("232050,3547+0127", "23:20:50,3547+01:27", hour=23, minute=20, second=50, microsecond=354700, tz=tzm)
+        self.assert_time("232050.3547+01", "23:20:50.3547+01", hour=23, minute=20, second=50, microsecond=354700, tz=tzh, preferred_mark=False)
 
         self.assert_time("2320+0127", "23:20+01:27", hour=23, minute=20, second=50, reduced=MINUTE, tz=tzm)
         self.assert_time("2320+01", "23:20+01", hour=23, minute=20, second=50, reduced=MINUTE, tz=tzh)
-        self.assert_time("2320,3547+0127", "23:20,3547+01:27", hour=23, minute=20, second=50, decimal=354700, reduced=MINUTE, tz=tzm)
-        self.assert_time("2320.3547+01", "23:20.3547+01", hour=23, minute=20, second=50, decimal=354700, preferred_mark=False, reduced=MINUTE, tz=tzh)
+        self.assert_time("2320,3547+0127", "23:20,3547+01:27", hour=23, minute=20, second=50, microsecond=354700, reduced=MINUTE, tz=tzm)
+        self.assert_time("2320.3547+01", "23:20.3547+01", hour=23, minute=20, second=50, microsecond=354700, reduced=MINUTE, tz=tzh, preferred_mark=False)
 
         self.assert_time("23+0127", "23+01:27", hour=23, minute=20, second=50, reduced=HOUR, tz=tzm)
         self.assert_time("23+01", None, hour=23, minute=20, second=50, reduced=HOUR, tz=tzh)
-        self.assert_time("23,3547+0127", "23,3547+01:27", hour=23, minute=20, second=50, decimal=354700, reduced=HOUR, tz=tzm)
-        self.assert_time("23.3547+01", None, hour=23, minute=20, second=50, decimal=354700, preferred_mark=False, reduced=HOUR, tz=tzh)
+        self.assert_time("23,3547+0127", "23,3547+01:27", hour=23, minute=20, second=50, microsecond=354700, reduced=HOUR, tz=tzm)
+        self.assert_time("23.3547+01", None, hour=23, minute=20, second=50, microsecond=354700, reduced=HOUR, tz=tzh, preferred_mark=False)
 
         self.assertRaises(ValueError, isotime.parse_iso, "-2050+0127")
         self.assertRaises(ValueError, isotime.parse_iso, "-20:50+0127")

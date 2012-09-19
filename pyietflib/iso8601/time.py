@@ -185,18 +185,18 @@ class isotime():
         
         self.iso_implied = None
     
-    normal_re = re.compile(r'''(?ax)T?
+    normal_re = re.compile(r'''(?ax)^T?
         (?P<hour>\d{2})(:?(?P<minute>\d{2})(:?(?P<second>\d{2}))?)?
         ([,.](?P<fraction>\d+))?
         ((?P<utc>Z)|((?P<tzsign>[+-])(?P<tzhour>\d{2})(?P<tzmin>\d{2})?))?
-        ''')
-    truncated_re = re.compile(r'''(?ax)T?
+        $''')
+    truncated_re = re.compile(r'''(?ax)^T?
         (?P<hour>-)
         ((?P<minute>(-|\d{2})))
         (:?(?P<second>\d{2}))?
         ([,.](?P<fraction>\d+))?
         (?P<utc>)(?P<tzsign>)(?P<tzhour>)(?P<tzmin>)
-        ''')
+        $''')
         
     @classmethod
     def parse_iso(cls, value):
@@ -206,7 +206,7 @@ class isotime():
             mo = cls.truncated_re.match(value)
         
         if mo is None:
-            return None
+            raise ValueError('Invalid representation "{0}".'.format(value))
 
         hour = mo.group("hour")
         if hour is not None and hour != '-':
@@ -465,34 +465,34 @@ class isotime():
     
     code2fmt = {
         # 5.3.1.1
-        0b11101:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.0s}{2}",
-        0b11100:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.0s}{2}",
+        0b11101:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.0s}",
+        0b11100:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.0s}",
         
         # 5.3.1.2
-        0b11001:"{0.hour:02d}{0.minute:02d}{1:.0s}{2}",
-        0b11000:"{0.hour:02d}:{0.minute:02d}{1:.0s}{2}",
-        0b10001:"{0.hour:02d}{1:.0s}{2}",
+        0b11001:"{0.hour:02d}{0.minute:02d}{1:.0s}",
+        0b11000:"{0.hour:02d}:{0.minute:02d}{1:.0s}",
+        0b10001:"{0.hour:02d}{1:.0s}",
         
         # 5.3.1.3
-        0b11111:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.7s}{2}",
-        0b11110:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.7s}{2}",
-        0b11011:"{0.hour:02d}{0.minute:02d}{1:.8s}{2}",
-        0b11010:"{0.hour:02d}:{0.minute:02d}{1:.9s}{2}",
-        0b10011:"{0.hour:02d}{0.fraction:.11s}{2}",
+        0b11111:"{0.hour:02d}{0.minute:02d}{0.second:02d}{1:.7s}",
+        0b11110:"{0.hour:02d}:{0.minute:02d}:{0.second:02d}{1:.7s}",
+        0b11011:"{0.hour:02d}{0.minute:02d}{1:.8s}",
+        0b11010:"{0.hour:02d}:{0.minute:02d}{1:.9s}",
+        0b10011:"{0.hour:02d}{1:.11s}",
         
         # 5.3.1.4
-        0b01101:"-{0.minute:02d}{0.second:02d}{1:.0s}{2:.0s}",
-        0b01100:"-{0.minute:02d}:{0.second:02d}{1:.0s}{2:.0s}",
-        0b01001:"-{0.minute:02d}{1:.0s}{2:.0s}",
-        0b00101:"--{0.second:02d}{1:.0s}{2:.0s}",
-        0b01111:"-{0.minute:02d}{0.second:02d}{1:.7s}{2:.0s}",
-        0b01110:"-{0.minute:02d}:{0.second:02d}{1:.7s}{2:.0s}",
-        0b01011:"-{0.minute:02d}{1:.9s}{2:.0s}",
-        0b00111:"--{0.second:02d}{1:.7s}{2:.0s}",
+        0b01101:"-{0.minute:02d}{0.second:02d}{1:.0s}",
+        0b01100:"-{0.minute:02d}:{0.second:02d}{1:.0s}",
+        0b01001:"-{0.minute:02d}{1:.0s}",
+        0b00101:"--{0.second:02d}{1:.0s}",
+        0b01111:"-{0.minute:02d}{0.second:02d}{1:.7s}",
+        0b01110:"-{0.minute:02d}:{0.second:02d}{1:.7s}",
+        0b01011:"-{0.minute:02d}{1:.9s}",
+        0b00111:"--{0.second:02d}{1:.7s}",
     }
     
-    def isoformat(self, basic=False, reduced=None, truncated=None, fraction=True,
-                preferred_mark=False, timezone=True):
+    def isoformat(self, basic=False, reduced=None, truncated=None,
+                fraction=True, preferred_mark=False, timezone=True):
         """Return a string representing the time in ISO 8601 format.
 
         If `basic` is true then the [:](colon) is ommitted from the
@@ -536,16 +536,17 @@ class isotime():
 
         if fraction:
             fraction = ""
-            if truncated[1] & 0b01100 == 0:
-                fraction = (self.minute * 60 + self.second) * 1000000 + self.microsecond
-                fraction = "{0:010d}".format(fraction)
-            elif truncated[1] & 0b00100 == 0:
-                fraction = self.second * 1000000 + self.microsecond
-                fraction = "{0:08d}".format(fraction)
-            elif truncated[1] & 0b00000 == 0:
-                fraction = self.microsecond
-                fraction = "{0:06d}".format(fraction)
+            if reduced[0] & 0b00100 != 0:
+                fraction = self.microsecond / 1000000
+                fraction = "{0:f}".format(fraction)
+            elif reduced[0] & 0b01000 != 0:
+                fraction = (self.second + self.microsecond / 1000000) / 60
+                fraction = "{0:f}".format(fraction)
+            elif reduced[0] & 0b10000 != 0:
+                fraction = (self.minute + (self.second + self.microsecond / 1000000) / 60) / 60
+                fraction = "{0:f}".format(fraction)
             
+            fraction = fraction[2:]
             if preferred_mark:
                 fraction = ',' + fraction
             else:
@@ -568,29 +569,25 @@ class isotime():
         if code not in self.code2fmt:
             __log__.debug("{0:05b}".format(code))
             raise ValueError("Invalid ISO 8601 time representation.")
-
-        if timezone and self.tzinfo:
-            mst = datetime.timezone(datetime.timedelta(hours=-7, minutes=30))
-            utc = datetime.timezone.utc
-            dt = datetime.datetime(1966, 8, 29, 00, 35, 54, tzinfo=mst)
-            tzinfo = mst
-            td = tzinfo.utcoffset(None)
-            tzhour, tzminute = divmod(td.seconds // 60, 60)
-            if tzhour > 12:
-                tzhour -= 24
-
-            if code & 0b00001:
-                tzone = "{0:+03d}{1:02d}".format(tzhour, tzminute)
-            else:
-                tzone = "{0:+03d}:{1:02d}".format(tzhour, tzminute)
-        else:
-            tzone = ""
-        
         fmt = self.code2fmt[code]
-        ret = fmt.format(self, fraction, tzone)
+        ret = fmt.format(self, fraction)
         if fraction and self.microsecond > 0:
             while ret.endswith('0'):
                 ret = ret[:-1]
+
+        if timezone and self.tzinfo:
+            td = self.tzinfo.utcoffset(None)
+            tzhour, tzminute = divmod(td.seconds // 60, 60)
+            if tzhour > 12:
+                tzhour -= 24
+            
+            if tzhour == 0 and tzminute == 0:
+                tzone = "Z"
+            elif code & 0b00001:
+                tzone = "{0:+03d}{1:02d}".format(tzhour, tzminute)
+            else:
+                tzone = "{0:+03d}:{1:02d}".format(tzhour, tzminute)
+            ret = ret + tzone
         return ret
         
     
