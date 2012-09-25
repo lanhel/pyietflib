@@ -369,7 +369,12 @@ class isotime():
             isinstance(other, datetime.datetime))
 
     def __cmp(self, other):
-        return float(self) - float(other)
+        lhs = float(self)
+        if isinstance(other, isotime):
+            rhs = float(other)
+        else:
+            rhs = other.hour * 3600 + other.minute * 60 + other.second + other.microsecond / 1000000
+        return self - other
 
     def __hash__(self):
         return hash(bytes(self))

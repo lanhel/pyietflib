@@ -22,9 +22,16 @@ limitations under the License.
 
 from .time import *
 from .date import *
-#from .datetime import *
+from .datetime import *
 #from .duration import *
 #from .recurring import *
+
+__all__ = ['isodate', 'isotime', 'isodatetime',
+        'CALENDAR', 'ORDINAL', 'WEEK',
+        'CENTURY', 'DECADE', 'YEAR', 'MONTH', 'DAYOFMONTH', 'DAYOFYEAR',
+        'WEEKOFYEAR', 'DAYOFWEEK',
+        'HOUR', 'MINUTE', 'SECOND'
+    ]
 
 
 def parse_iso8601(value):
@@ -70,15 +77,15 @@ def parse_iso8601(value):
     ret = []
     for p in value.split('/'):
         if p.startswith('P'):
-            ret.append(isoduration(p))
+            ret.append(isoduration.parseiso(p))
         elif p.startswith('R'):
-            ret.append(isorecur(p))
+            ret.append(isorecur.parseiso(p))
         elif p.startswith('T'):
-            ret.append(isotime(p))
+            ret.append(isotime.parseiso(p))
         elif 'T' in p:
-            ret.append(isodatetime(p))
+            ret.append(isodatetime.parseiso(p))
         else:
-            ret.append(isodate(p))
+            ret.append(isodate.parseiso(p))
     return ret
 
 

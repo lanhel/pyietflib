@@ -117,7 +117,7 @@ class TestDateCalendar(unittest.TestCase):
         self.assertEqual((0, 19, 66, 8, 29, 241, 19, 6, 6, 35, 1), isodate.compute_all_fields(century=19, year=66, month=8, dayofmonth=29))
     
     def test_functionality(self):
-        """Basic functaionality tests over all representations."""
+        """Basic functionality tests over all representations."""
         test = isodate.parse_iso("1966-08-29")
         self.assertEqual(0, test.iso_expanded)
         self.assertEqual(19, test.iso_century)

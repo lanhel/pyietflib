@@ -96,7 +96,7 @@ class TestTime(unittest.TestCase):
             self.assertEqual(extended, test.isoformat(basic=False, reduced=reduced, truncated=truncated, fraction=fraction, preferred_mark=preferred_mark))
     
     def test_functionality(self):
-        """Basic functaionality tests over all representations."""
+        """Basic functionality tests over all representations."""
         t1 = isotime.parse_iso("23:20:50")
         t2 = isotime.parse_iso("07:13:27")
         t3 = isotime.parse_iso("23:20:50")
