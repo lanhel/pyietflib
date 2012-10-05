@@ -730,24 +730,30 @@ class isodate():
         """This includes all the implied values to recrate this object as
         it stands."""
         fmt = []
-        if self.iso_expanded:
+        if self.__orig_expanded:
             fmt.append("expanded={0.iso_expanded:+2d}")
-        if self.iso_century:
+        if self.__orig_century:
             fmt.append("century={0.iso_century:2d}")
-        if self.iso_year:
+        if self.__orig_year:
             fmt.append("year={0.iso_year:2d}")
-        if self.iso_month:
+        if self.__orig_month:
             fmt.append("month={0.iso_month:2d}")
-        if self.iso_dayofmonth:
+        if self.__orig_dayofmonth:
             fmt.append("dayofmonth={0.iso_dayofmonth:2d}")
-        if self.iso_dayofyear:
+        if self.__orig_dayofyear:
             fmt.append("dayofyear={0.iso_dayofyear:2d}")
-        if self.iso_weekofyear:
+        if self.__orig_weekcentury:
+            fmt.append("weekcentury={0.iso_weekcentury:2d}")
+        if self.__orig_weekdecade:
+            fmt.append("weekdecade={0.iso_weekdecade:1d}")
+        if self.__orig_weekyearofdec:
+            fmt.append("weekyearofdec={0.iso_weekyearofdec:1d}")
+        if self.__orig_weekofyear:
             fmt.append("weekofyear={0.iso_weekofyear:2d}")
-        if self.iso_dayofweek:
-            fmt.append("dayofweek={0.iso_dayofweek:2d}")
+        if self.__orig_dayofweek:
+            fmt.append("dayofweek={0.iso_dayofweek:1d}")
         fmt = "isodate({0})".format(', '.join(fmt))
-        return self.__repr_fmt.format(self)
+        return fmt.format(self)
     
     def __str__(self):
         """This is the same as calling `isoformat()`."""

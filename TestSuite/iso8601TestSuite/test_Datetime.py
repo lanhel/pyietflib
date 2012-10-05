@@ -38,14 +38,15 @@ class TestDatetime(unittest.TestCase):
         """Basic functionality tests over all representations."""
         date = datetime.date(1966, 8, 29)
         time = datetime.time(12, 35, 32, 0, datetime.timezone.utc)
+        dt  = datetime.datetime(1966, 8, 29, 12, 35, 32, 0, datetime.timezone.utc)
         
-        self.assert_datetime(date, time, isodatetime(
-            century=19, year=66, month=8, day=29,
+        self.assertEqual(dt, isodatetime(
+            century=19, year=66, month=8, dayofmonth=29,
             hour=12, minute=35, second=32, tzinfo=datetime.timezone.utc))
-        self.assert_datetime(date, time, isodatetime(
+        self.assertEqual(dt, isodatetime(
             century=19, year=66, dayofyear=241,
             hour=12, minute=35, second=32, tzinfo=datetime.timezone.utc))
-        self.assert_datetime(date, time, isodatetime(
+        self.assertEqual(dt, isodatetime(
             weekcentury=19, weekdecade=6, weekyearofdec=6, weekofyear=35, dayofweek=1,
             hour=12, minute=35, second=32, tzinfo=datetime.timezone.utc))
         
@@ -86,16 +87,18 @@ class TestDatetime(unittest.TestCase):
     def test_complete(self):
         """ISO 8601 §5.4.1 Complete representation."""
         date = datetime.date(1966, 8, 29)
-        time = datetime.time(12, 35, 32, 0, datetime.timezone.utc)
+        timeutc = datetime.time(12, 35, 32, 0, datetime.timezone.utc)
+        timesix = datetime.time(12, 35, 32, 0, datetime.timezone(datetime.timedelta(hours=-6)))
+        timeloc = datetime.time(12, 35, 32, 0)
         
-        self.assert_datetime(date, time, "19660829T053532")
-        self.assert_datetime(date, time, "19660829T123532Z")
-        self.assert_datetime(date, time, "19660829T053532-0600")
-        self.assert_datetime(date, time, "19660829T053532-06")
-        self.assert_datetime(date, time, "1966-08-29T05:35:32")
-        self.assert_datetime(date, time, "1966-08-29T12:35:32Z")
-        self.assert_datetime(date, time, "1966-08-29T05:35:32-06:00")
-        self.assert_datetime(date, time, "1966-08-29T05:35:32-06")
+        self.assert_datetime(date, timeloc, "19660829T053532")
+        self.assert_datetime(date, timeutc, "19660829T123532Z")
+        self.assert_datetime(date, timesix, "19660829T053532-0600")
+        self.assert_datetime(date, timesix, "19660829T053532-06")
+        self.assert_datetime(date, timeloc, "1966-08-29T05:35:32")
+        self.assert_datetime(date, timeutc, "1966-08-29T12:35:32Z")
+        self.assert_datetime(date, timesix, "1966-08-29T05:35:32-06:00")
+        self.assert_datetime(date, timesix, "1966-08-29T05:35:32-06")
         
         self.assert_datetime(date, time, "1966241T053532")
         self.assert_datetime(date, time, "1966241T123532Z")

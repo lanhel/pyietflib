@@ -262,7 +262,7 @@ class isotime():
         if self.tzinfo:
             fmt.append("tzinfo={0.tzinfo}")
         fmt = "isotime({0})".format(', '.join(fmt))
-        return self.__repr_fmt.format(self)
+        return fmt.format(self)
 
     def __str__(self):
         """This is the same as calling `isoformat`."""
@@ -374,7 +374,7 @@ class isotime():
             rhs = float(other)
         else:
             rhs = other.hour * 3600 + other.minute * 60 + other.second + other.microsecond / 1000000
-        return self - other
+        return lhs - rhs
 
     def __hash__(self):
         return hash(bytes(self))

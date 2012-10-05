@@ -216,30 +216,14 @@ class isodatetime():
     def __repr__(self):
         """This includes all the implied values to recrate this object as
         it stands."""
-        fmt = []
-        if self.iso_expanded:
-            fmt.append("expanded={0.iso_expanded:+2d}")
-        if self.iso_century:
-            fmt.append("century={0.iso_century:2d}")
-        if self.iso_year:
-            fmt.append("year={0.iso_year:2d}")
-        if self.iso_month:
-            fmt.append("month={0.iso_month:2d}")
-        if self.iso_dayofmonth:
-            fmt.append("dayofmonth={0.iso_dayofmonth:2d}")
-        if self.iso_dayofyear:
-            fmt.append("dayofyear={0.iso_dayofyear:2d}")
-        if self.iso_weekofyear:
-            fmt.append("weekofyear={0.iso_weekofyear:2d}")
-        if self.iso_dayofweek:
-            fmt.append("dayofweek={0.iso_dayofweek:2d}")
-        fmt = "isodate({0})".format(', '.join(fmt))
-        return self.__repr_fmt.format(self)
+        d = repr(self.__date)[len("isodate("):-len(")")]
+        t = repr(self.__time)[len("isotime("):-len(")")]
+        return "isodatetime({0}, {1})".format(d, t)
     
     def __str__(self):
         """This is the same as calling `isoformat()`."""
         return self.isoformat(representation=CALENDAR, basic=False, expanded=False)
-    
+
     def __bytes__(self):
         if self.__bytes is None:
             self.__bytes = [self.iso_dayofmonth, self.iso_month, self.iso_year, self.iso_century]
@@ -353,7 +337,7 @@ class isodatetime():
         return hash(bytes(self))
     
     def __int__(self):
-        return self.__ordinal
+        return self.__date.toordinal()
     
     def __add__(self, other):
         if isinstance(other, datetime.timedelta):
@@ -528,7 +512,7 @@ class isodatetime():
         return (self.year, self.month, self.day, 0, 0, 0, self.weekday(), self.iso_dayofyear, -1)
     
     def toordinal(self):
-        return self.__ordinal
+        return self.__date.toordinal()
     
     def weekday(self):
         return self.__dayofweek - 1
