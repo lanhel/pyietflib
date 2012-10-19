@@ -188,7 +188,7 @@ class isotime():
     normal_re = re.compile(r'''(?ax)^T?
         (?P<hour>\d{2})(:?(?P<minute>\d{2})(:?(?P<second>\d{2}))?)?
         ([,.](?P<fraction>\d+))?
-        ((?P<utc>Z)|((?P<tzsign>[+-])(?P<tzhour>\d{2})(?P<tzmin>\d{2})?))?
+        ((?P<utc>Z)|((?P<tzsign>[+-])(?P<tzhour>\d{2})(:?(?P<tzmin>\d{2}))?))?
         $''')
     truncated_re = re.compile(r'''(?ax)^T?
         (?P<hour>-)
@@ -200,7 +200,7 @@ class isotime():
         
     @classmethod
     def parse_iso(cls, value):
-        if '-' not in value:
+        if not value.startswith('-'):
             mo = cls.normal_re.match(value)
         else:
             mo = cls.truncated_re.match(value)

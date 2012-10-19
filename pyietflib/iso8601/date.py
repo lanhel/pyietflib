@@ -556,6 +556,8 @@ class isodate():
         if refdate is None:
             refdate = cls.epoc()
         
+        print((expanded, century, year, month, dayofmonth, dayofyear, weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek))
+        
         if expanded is None:
             expanded = refdate.iso_expanded
         if century is None:
@@ -611,7 +613,9 @@ class isodate():
             md = month_from_dayofyear(cls, leap, dayofyear)
             cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
         
-        return tuple([expanded, century, year] + list(md) + [dayofyear] + list(cdywd))
+        ret = tuple([expanded, century, year] + list(md) + [dayofyear] + list(cdywd))
+        print(ret)
+        return ret
     
     
     ###
@@ -866,6 +870,8 @@ class isodate():
             isinstance(other, datetime.datetime))
     
     def __cmp(self, other):
+        print(self)
+        print(self.toordinal(), other.toordinal(), self.toordinal() - other.toordinal())
         return self.toordinal() - other.toordinal()
     
     def __hash__(self):
@@ -975,7 +981,7 @@ class isodate():
             self.__weekyearofdec = self.__orig_weekyearofdec
             self.__weekofyear = self.__orig_weekofyear
             self.__dayofweek = self.__orig_dayofweek
-
+        
         yby = self.__expanded * 10000 + self.__century * 100 + self.__year - 1
         dby = yby * 365 + yby // 4 - yby // 100 + yby // 400
         self.__ordinal = dby + self.__dayofyear
