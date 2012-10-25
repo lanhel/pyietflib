@@ -507,6 +507,57 @@ class isodate():
         dayofyear, weekofyear, dayofweek."""
         pass
     
+    @classmethod 
+    def calendar_from_ordinal(cls, expanded, century, year, dayofyear):
+        """Determine the gregorian month and day of month for a day of
+        year. If it is a leap year then `leap` should be true."""
+        leap = (year % 4 == 0 and (century != 0 or century % 4 == 0))
+        mrangeoff = 3 if not leap else 4
+        for i, m in enumerate(cls.months):
+            if m[mrangeoff][0] <= dayofyear <= m[mrangeoff][1]:
+                return expanded, century, year, i, dayofyear - m[mrangeoff][0] + 1
+        raise ValueError("Invalid day of year {0}.", dayofyear)
+    
+    @classmethod
+    def ordinal_from_calendar(cls, expanded, century, year, month, dayofmonth):
+        leap = (year % 4 == 0 and (century != 0 or century % 4 == 0))
+        mrangeoff = 3 if not leap else 4
+        dayofyear = cls.months[month][mrangeoff][0] + dayofmonth - 1
+        return expanded, century, year, dayofyear
+
+    @classmethod
+    def weekdate_from_ordinal(cls, expanded, century, year, dayofyear):
+        weekyear = expanded * 10000 + century * 100 + year
+        adjust = cls.__adjustment_to_jan_1_day_of_year(expanded, century, year)
+        dow = (dayofyear - adjust) % 7
+        if dow == 0:
+            dow = 7
+        week = (dayofyear - dow + 10) // 7
+        if week == 0:
+            weekyear -= 1
+            pyd = 365 if not (weekyear % 4 == 0 and (weekyear % 100 != 0 or weekyear % 400 == 0)) else 366
+            week = (pyd + dayofyear - dow + 10) // 7
+        elif week == 53 and dow < 4:
+            week = 1
+        return weekyear // 100, weekyear % 100 // 10, weekyear % 10, week, dow
+    
+    @classmethod
+    def ordinal_from_weekdate(cls, weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek):
+        weekyear = weekcentury * 100 + weekdecade * 10 + weekyearofdec
+        expanded, century, year = weekyear // 10000, weekyear % 10000 // 100, weekyear % 100
+        adjust = cls.__adjustment_to_jan_1_day_of_year(expanded, century, year)
+        dayofyear = (weekofyear - 1) * 7 + dayofweek + adjust
+        return expanded, century, year, dayofyear
+
+    @classmethod
+    def __adjustment_to_jan_1_day_of_year(cls, expanded, century, year):
+        yby = expanded * 10000 + century * 100 + year - 1
+        yofc = yby % 100
+        cby = yby - yofc
+        gfac = yofc + yofc // 4
+        jan1dow = 1 + (((((cby // 100) % 4) * 5) + gfac) % 7)
+        return {1:0, 2:-1, 3:-2, 4:-3, 5:3, 6:2, 7:1}[jan1dow]
+    
     @classmethod
     def compute_all_fields(cls, expanded=None, century=None, year=None,
             month=None, dayofmonth=None, dayofyear=None,
@@ -515,48 +566,15 @@ class isodate():
         """Given a set of ISO date fields compute all fields that are `None`
         and return the fields in order: expanded, century, year, month,
         dayofmonth, dayofyear, weekyear, weekofyear, dayofweek."""
-        def month_from_dayofyear(cls, leap, dayofyear):
-            mrangeoff = 3 if not leap else 4
-            for i, m in enumerate(cls.months):
-                if m[mrangeoff][0] <= dayofyear <= m[mrangeoff][1]:
-                    return i, dayofyear - m[mrangeoff][0] + 1
-            raise ValueError("Invalid day of year {0}.", dayofyear)
-        
-        def week_1_monday(cls, year):
-            fdy = days_before_year(cls, year) + 1
-            fdw = (fdy + 6) % 7
-            monday = fdy - fdw
-            if fdw > 3: #Thursday
-                monday += 7
-            return monday
-            
-        def week_from_dayofyear(cls, expanded, century, year, dayofyear):
-            weekyear = expanded * 10000 + century * 100 + year
-            adjust = adjustment_to_jan_1_day_of_year(expanded, century, year)
-            dow = (dayofyear - adjust) % 7
-            if dow == 0:
-                dow = 7
-            week = (dayofyear - dow + 10) // 7
-            if week == 0:
-                weekyear -= 1
-                pyd = 365 if not (weekyear % 4 == 0 and (weekyear % 100 != 0 or weekyear % 400 == 0)) else 366
-                week = (pyd + dayofyear - dow + 10) // 7
-            elif week == 53 and dow < 4:
-                week = 1
-            return weekyear // 100, weekyear % 100 // 10, weekyear % 10, week, dow
-        
-        def adjustment_to_jan_1_day_of_year(expanded, century, year):
-            yby = expanded * 10000 + century * 100 + year - 1
-            yofc = yby % 100
-            cby = yby - yofc
-            gfac = yofc + yofc // 4
-            jan1dow = 1 + (((((cby // 100) % 4) * 5) + gfac) % 7)
-            return {1:0, 2:-1, 3:-2, 4:-3, 5:3, 6:2, 7:1}[jan1dow]
         
         if refdate is None:
             refdate = cls.epoc()
         
-        print((expanded, century, year, month, dayofmonth, dayofyear, weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek))
+        ### The problem is here
+        ### Essentially there are three date types: gregorian, dayofyear, and calendar (week)
+        ### Only one of these should be used to do all of these calculations
+        ### and all other values should be filled in from that.
+        #print((expanded, century, year, month, dayofmonth, dayofyear, weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek))
         
         if expanded is None:
             expanded = refdate.iso_expanded
@@ -571,50 +589,57 @@ class isodate():
         if weekyearofdec is None:
             weekyearofdec = refdate.iso_weekyearofdec
         
+        gregorian = (expanded, century, year, month, dayofmonth)
+        ordinal = (expanded, century, year, dayofyear)
+        weekdate = (weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
+        
         leap = (year % 4 == 0 and (century != 0 or century % 4 == 0))
         mrangeoff = 3 if not leap else 4
         
         if dayofyear is not None:
             if dayofyear < 0 or dayofyear > cls.months[12][mrangeoff][1]:
                 raise ValueError("Day of year ({0}) out of range.".format(dayofyear))
-            md = month_from_dayofyear(cls, leap, dayofyear)
-            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = cls.calendar_from_ordinal(expanded, century, year, dayofyear)
+            cdywd = cls.weekdate_from_ordinal(expanded, century, year, dayofyear)
         
         elif month is not None:
             if dayofmonth is None:
                 dayofmonth = refdate.iso_dayofmonth
             dayofyear = cls.months[month][mrangeoff][0] + dayofmonth - 1
-            md = (month, dayofmonth)
-            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = (expanded, century, year, month, dayofmonth)
+            cdywd = cls.weekdate_from_ordinal(expanded, century, year, dayofyear)
         
         elif dayofmonth is not None:
             month = refdate.iso_month
             dayofyear = cls.months[month][mrangeoff][0] + dayofmonth - 1
-            md = (month, dayofmonth)
-            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = (expanded, century, year, month, dayofmonth)
+            cdywd = cls.weekdate_from_ordinal(expanded, century, year, dayofyear)
                     
         elif weekofyear is not None:
             if dayofweek is None:
                 dayofweek = refdate.iso_dayofweek
-            adjust = adjustment_to_jan_1_day_of_year(expanded, century, year)
+            adjust = cls.__adjustment_to_jan_1_day_of_year(expanded, century, year)
             dayofyear = (weekofyear - 1) * 7 + dayofweek + adjust
-            md = month_from_dayofyear(cls, leap, dayofyear)
+            #expanded, century, year, dayofyear = cls.ordinal_from_weekdate(
+            #    weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
+            md = cls.calendar_from_ordinal(expanded, century, year, dayofyear)
             cdywd = (weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
         
         elif dayofweek is not None:
             weekofyear = refdate.iso_weekofyear
-            adjust = adjustment_to_jan_1_day_of_year(expanded, century, year)
+            #expanded, century, year, dayofyear = cls.ordinal_from_weekdate(
+            #    weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
+            adjust = cls.__adjustment_to_jan_1_day_of_year(expanded, century, year)
             dayofyear = (weekofyear - 1) * 7 + dayofweek + adjust
-            md = month_from_dayofyear(cls, leap, dayofyear)
+            md = cls.calendar_from_ordinal(expanded, century, year, dayofyear)
             cdywd = (weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
         
         else:
             dayofyear = refdate.iso_dayofyear
-            md = month_from_dayofyear(cls, leap, dayofyear)
-            cdywd = week_from_dayofyear(cls, expanded, century, year, dayofyear)
+            md = cls.calendar_from_ordinal(expanded, century, year, dayofyear)
+            cdywd = cls.weekdate_from_ordinal(expanded, century, year, dayofyear)
         
-        ret = tuple([expanded, century, year] + list(md) + [dayofyear] + list(cdywd))
-        print(ret)
+        ret = tuple(list(md) + [dayofyear] + list(cdywd))
         return ret
     
     
@@ -737,25 +762,25 @@ class isodate():
         if self.__orig_expanded:
             fmt.append("expanded={0.iso_expanded:+2d}")
         if self.__orig_century:
-            fmt.append("century={0.iso_century:2d}")
+            fmt.append("century={0.iso_century:d}")
         if self.__orig_year:
-            fmt.append("year={0.iso_year:2d}")
+            fmt.append("year={0.iso_year:d}")
         if self.__orig_month:
-            fmt.append("month={0.iso_month:2d}")
+            fmt.append("month={0.iso_month:d}")
         if self.__orig_dayofmonth:
-            fmt.append("dayofmonth={0.iso_dayofmonth:2d}")
+            fmt.append("dayofmonth={0.iso_dayofmonth:d}")
         if self.__orig_dayofyear:
-            fmt.append("dayofyear={0.iso_dayofyear:2d}")
+            fmt.append("dayofyear={0.iso_dayofyear:d}")
         if self.__orig_weekcentury:
-            fmt.append("weekcentury={0.iso_weekcentury:2d}")
+            fmt.append("weekcentury={0.iso_weekcentury:d}")
         if self.__orig_weekdecade:
-            fmt.append("weekdecade={0.iso_weekdecade:1d}")
+            fmt.append("weekdecade={0.iso_weekdecade:d}")
         if self.__orig_weekyearofdec:
-            fmt.append("weekyearofdec={0.iso_weekyearofdec:1d}")
+            fmt.append("weekyearofdec={0.iso_weekyearofdec:d}")
         if self.__orig_weekofyear:
-            fmt.append("weekofyear={0.iso_weekofyear:2d}")
+            fmt.append("weekofyear={0.iso_weekofyear:d}")
         if self.__orig_dayofweek:
-            fmt.append("dayofweek={0.iso_dayofweek:1d}")
+            fmt.append("dayofweek={0.iso_dayofweek:d}")
         fmt = "isodate({0})".format(', '.join(fmt))
         return fmt.format(self)
     
@@ -870,8 +895,6 @@ class isodate():
             isinstance(other, datetime.datetime))
     
     def __cmp(self, other):
-        print(self)
-        print(self.toordinal(), other.toordinal(), self.toordinal() - other.toordinal())
         return self.toordinal() - other.toordinal()
     
     def __hash__(self):
@@ -999,7 +1022,18 @@ class isodate():
             orig = getattr(self, "_isodate__orig_" + name)
             actu = getattr(self, "_isodate__" + name)
             if orig is not None and orig != actu:
-                raise ValueError("Inconsistent arguments to isodate.")
+                print(self.__expanded, self.__orig_expanded)
+                print(self.__century, self.__orig_century)
+                print(self.__year, self.__orig_year)
+                print(self.__dayofyear, self.__orig_dayofyear)
+                print(self.__month, self.__orig_month)
+                print(self.__dayofmonth, self.__orig_dayofmonth)
+                print(self.__weekcentury, self.__orig_weekcentury)
+                print(self.__weekdecade, self.__orig_weekdecade)
+                print(self.__weekyearofdec, self.__orig_weekyearofdec)
+                print(self.__weekofyear, self.__orig_weekofyear)
+                print(self.__dayofweek, self.__orig_dayofweek)
+                raise ValueError("Inconsistent arguments to isodate for {0}.".format(name))
     
     @property
     def iso_leap_year(self):

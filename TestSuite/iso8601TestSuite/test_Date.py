@@ -69,6 +69,10 @@ class TestDateCalendar(unittest.TestCase):
     
     def test_computation(self):
         """Test the compuation methods for all ISO date fields."""
+        
+        self.assertEqual((0, 19, 66, 8, 29), isodate.calendar_from_ordinal(0, 19, 66, 241))
+        self.assertEqual((0, 19, 66, 241), isodate.ordinal_from_calendar(0, 19, 66, 8, 29))
+        
         self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=-1)
         self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=366)
         
@@ -313,7 +317,8 @@ class TestDateOrdinal(unittest.TestCase):
         """ISO 8601 §5.2.2.3 Expanded representations."""
         self.assert_date("+221966241", "+221966-241", expanded=22, century=19, year=66, dayofyear=241)
 
-    
+
+
 class TestDateWeek(unittest.TestCase):
     """This will test ISO 8601 week date parsing and formatting."""
     def assert_date(self, basic, extended, reduced=None, truncated=None,
@@ -350,6 +355,21 @@ class TestDateWeek(unittest.TestCase):
                     expanded=(expanded is not None)))
             bdate = isodate.parse_iso(basic, expand_digits=expand_len)
             self.assertEqual(bdate, isodate.parse_iso(extended, expand_digits=expand_len))
+
+    def test_computation(self):
+        """Test the compuation methods for all ISO date fields."""
+        
+        self.assertEqual((19, 6, 6, 35, 1), isodate.weekdate_from_ordinal(0, 19, 66, 241))
+        self.assertEqual((0, 19, 66, 241), isodate.ordinal_from_weekdate(19, 6, 6, 35, 1))
+        
+        self.assertRaises(ValueError, isodate.compute_all_fields, weekofyear=-1)
+        self.assertRaises(ValueError, isodate.compute_all_fields, weekofyear=54)
+        
+        ### Check some basic day of year calculations
+        self.assertEqual((0, 19, 66, 8, 29, 240, 19, 6, 6, 35, 1),
+            isodate.compute_all_fields(
+                weekcentury=19, weekdecade=6, weekyearofdec=6,
+                weekofyear=35, dayofweek=1))
 
     def test_complete(self):
         """ISO 8601 §5.2.3.1 Complete representation."""
@@ -393,6 +413,7 @@ class TestDateWeek(unittest.TestCase):
 
     def test_expanded_day(self):
         """ISO 8601 §5.2.3.4 (b) A specific week."""
+        print("SPAM_+_+_+_+_+_+_+_+_+_+_+_+_+")
         self.assert_date("+221966W35", "+221966-W35", expanded=22, century=19, decade=6, year=6, weekofyear=35, reduced=WEEKOFYEAR)
 
 
