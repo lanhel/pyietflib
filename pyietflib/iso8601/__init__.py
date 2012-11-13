@@ -77,15 +77,15 @@ def parse_iso8601(value):
     ret = []
     for p in value.split('/'):
         if p.startswith('P'):
-            ret.append(isoduration.parseiso(p))
+            ret.append(isoduration.parse_iso(p))
         elif p.startswith('R'):
-            ret.append(isorecur.parseiso(p))
+            ret.append(isorecur.parse_iso(p))
         elif p.startswith('T'):
-            ret.append(isotime.parseiso(p))
+            ret.append(isotime.parse_iso(p))
         elif 'T' in p:
-            ret.append(isodatetime.parseiso(p))
+            ret.append(isodatetime.parse_iso(p))
         else:
-            ret.append(isodate.parseiso(p))
+            ret.append(isodate.parse_iso(p))
     return ret
 
 

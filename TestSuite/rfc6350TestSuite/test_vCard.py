@@ -187,7 +187,7 @@ END:VCARD
         self.assertEquals(1, note.parameters[2].value)
 
 
-    @unittest.skip("Complete Complete First")
+    #@unittest.skip("Complete Complete First")
     def test_rfc_author(self):
         """Test RFC 6350 author's vCard."""
         x = parse_vcard(encode_to_stream("""
@@ -222,10 +222,12 @@ END:VCARD
         self.assertEquals("Perreault;Simon;;;ing. jr,M.Sc.", x["N"][0].value)
         self.assertEquals(0, len(x["N"][0].parameters))
         
-        self.assertEquals(iso8601.isodate(month=2, dayofmonth=3), iso8601.isodate.parse_iso(x["BDAY"][0].value))
+        self.assertEquals("--0203", x["BDAY"][0].value)
+        self.assertEquals(iso8601.parse_iso8601("--0203")[0], x["BDAY"][0].date)
         self.assertEquals(0, len(x["BDAY"][0].parameters))
         
-        self.assertEquals(iso8601.isodatetime(century=20, year=9, month=8, dayofmonth=8, hour=14, minute=30, tz=-5), iso8601.isodate.parse_iso(x["ANNIVERSARY"][0].value))
+        self.assertEquals("20090808T1430-0500", x["ANNIVERSARY"][0].value)
+        self.assertEquals(iso8601.parse_iso8601("20090808T1430-0500")[0], x["ANNIVERSARY"][0].date)
         self.assertEquals(0, len(x["ANNIVERSARY"][0].parameters))
         
         self.assertEquals("M", x["GENDER"][0].value)
@@ -234,55 +236,67 @@ END:VCARD
         self.assertEquals("fr", x["LANG"][0].value)
         self.assertEquals(1, len(x["LANG"][0].parameters))
         self.assertEquals("PREF", x["LANG"][0].parameters[0].name)
-        self.assertEquals("1", x["LANG"][0].parameters[0].value)
+        self.assertEquals(1, x["LANG"][0].parameters[0].value)
         
         self.assertEquals("en", x["LANG"][1].value)
-        self.assertEquals(1, len(x["LANG"][0].parameters))
-        self.assertEquals("PREF", x["LANG"][0].parameters[0].name)
-        self.assertEquals("2", x["LANG"][0].parameters[0].value)
+        self.assertEquals(1, len(x["LANG"][1].parameters))
+        self.assertEquals("PREF", x["LANG"][1].parameters[0].name)
+        self.assertEquals(2, x["LANG"][1].parameters[0].value)
         
         self.assertEquals("Viagenie", x["ORG"][0].value)
         self.assertEquals(1, len(x["ORG"][0].parameters))
         self.assertEquals("TYPE", x["ORG"][0].parameters[0].name)
         self.assertEquals(["work"], x["ORG"][0].parameters[0].value)
         
-        self.assertEquals("Suite D2-630;2875 Laurier;Quebec;QC;G1V 2M2;Canada", x["ADR"][0].value)
+        self.assertEquals(";Suite D2-630;2875 Laurier;Quebec;QC;G1V 2M2;Canada", x["ADR"][0].value)
         self.assertEquals(1, len(x["ADR"][0].parameters))
         self.assertEquals("TYPE", x["ADR"][0].parameters[0].name)
         self.assertEquals(["work"], x["ADR"][0].parameters[0].value)
         
-        self.assertEquals(rfc3966.TelURI("tel:+1-418-656-9254;ext=102"), x["TEL"][0].value)
-        self.assertEquals(2, len(x["TEL"][0].parameters))
+        self.assertEquals("tel:+1-418-656-9254;ext=102", x["TEL"][0].value)
+        #TODO
+        #self.assertEquals(rfc3966.TelURI("tel:+1-418-656-9254;ext=102"), x["TEL"][0].uri)
+        self.assertEquals(3, len(x["TEL"][0].parameters))
         self.assertEquals("VALUE", x["TEL"][0].parameters[0].name)
         self.assertEquals("uri", x["TEL"][0].parameters[0].value)
-        self.assertEquals("TYPE", x["TEL"][0].parameters[0].name)
-        self.assertEquals(["work","voice"], x["TEL"][0].parameters[0].value)
+        self.assertEquals("TYPE", x["TEL"][0].parameters[1].name)
+        self.assertEquals(["work","voice"], x["TEL"][0].parameters[1].value)
         
-        self.assertEquals(rfc3966.TelURI("tel:+1-418-262-6501"), x["TEL"][1].value)
-        self.assertEquals(2, len(x["TEL"][0].parameters))
-        self.assertEquals("VALUE", x["TEL"][0].parameters[0].name)
-        self.assertEquals("uri", x["TEL"][0].parameters[0].value)
-        self.assertEquals("TYPE", x["TEL"][0].parameters[0].name)
-        self.assertEquals(["work","cell","voice","video","text"], x["TEL"][0].parameters[0].value)
+        self.assertEquals("tel:+1-418-262-6501", x["TEL"][1].value)
+        #TODO
+        #sself.assertEquals(rfc3966.TelURI("tel:+1-418-262-6501"), x["TEL"][1].uri)
+        self.assertEquals(2, len(x["TEL"][1].parameters))
+        self.assertEquals("VALUE", x["TEL"][1].parameters[0].name)
+        self.assertEquals("uri", x["TEL"][1].parameters[0].value)
+        self.assertEquals("TYPE", x["TEL"][1].parameters[1].name)
+        self.assertEquals(["work","cell","voice","video","text"], x["TEL"][1].parameters[1].value)
         
-        self.assertEquals(rfc6068.MailtoURI("mailto:simon.perreault@viagenie.ca"), x["EMAIL"][0].value)
+        self.assertEquals("simon.perreault@viagenie.ca", x["EMAIL"][0].value)
+        #TODO
+        #sself.assertEquals(rfc6068.MailtoURI("mailto:simon.perreault@viagenie.ca"), x["EMAIL"][0].uri)
         self.assertEquals(1, len(x["EMAIL"][0].parameters))
         self.assertEquals("TYPE", x["EMAIL"][0].parameters[0].name)
         self.assertEquals(["work"], x["EMAIL"][0].parameters[0].value)
         
-        self.assertEquals(rfc5870.GeoURI("geo:46.772673,-71.282945"), x["GEO"][0].value)
+        self.assertEquals("geo:46.772673,-71.282945", x["GEO"][0].value)
+        #TODO
+        #sself.assertEquals(rfc5870.GeoURI("geo:46.772673,-71.282945"), x["GEO"][0].uri)
         self.assertEquals(1, len(x["GEO"][0].parameters))
         self.assertEquals("TYPE", x["GEO"][0].parameters[0].name)
         self.assertEquals(["work"], x["GEO"][0].parameters[0].value)
         
-        self.assertEquals(rfc2616.HttpURL("http://www.viagenie.ca/simon.perreault/simon.asc"), x["KEY"][0].value)
-        self.assertEquals(1, len(x["KEY"][0].parameters))
+        self.assertEquals("http://www.viagenie.ca/simon.perreault/simon.asc", x["KEY"][0].value)
+        #TODO
+        #sself.assertEquals(rfc2616.HttpURL("http://www.viagenie.ca/simon.perreault/simon.asc"), x["KEY"][0].url)
+        self.assertEquals(2, len(x["KEY"][0].parameters))
         self.assertEquals("TYPE", x["KEY"][0].parameters[0].name)
         self.assertEquals(["work"], x["KEY"][0].parameters[0].value)
         
         self.assertEquals("-0500", x["TZ"][0].value)
         
-        self.assertEquals(rfc2616.HttpURL("http://nomis80.org"), x["URL"][0].value)
+        self.assertEquals("http://nomis80.org", x["URL"][0].value)
+        #TODO
+        #sself.assertEquals(rfc2616.HttpURL("http://nomis80.org"), x["URL"][0].url)
         self.assertEquals(1, len(x["URL"][0].parameters))
         self.assertEquals("TYPE", x["URL"][0].parameters[0].name)
         self.assertEquals(["home"], x["URL"][0].parameters[0].value)
