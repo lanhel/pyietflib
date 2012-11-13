@@ -340,40 +340,40 @@ class isodatetime():
     def __eq__(self, other):
         if not self.__comparable(other):
             return NotImplemented
-        return self.__cmp(other) == 0
+        od = other.date() if isinstance(other, datetime.datetime) else other.__date
+        ot = other.time() if isinstance(other, datetime.datetime) else other.__time
+        return (self.__date == od and self.__time == ot)
     
     def __ne__(self, other):
         if not self.__comparable(other):
             return NotImplemented
-        return self.__cmp(other) != 0
+        od = other.date() if isinstance(other, datetime.datetime) else other.__date
+        ot = other.time() if isinstance(other, datetime.datetime) else other.__time
+        return (self.__date != od or self.__time != ot)
     
     def __lt__(self, other):
         if not self.__comparable(other):
             return NotImplemented
-        return self.__cmp(other) < 0
+        od = other.date() if isinstance(other, datetime.datetime) else other.__date
+        ot = other.time() if isinstance(other, datetime.datetime) else other.__time
+        return (self.__date < od or (self.__date == od and self.__time < ot))
     
     def __le__(self, other):
-        if not self.__comparable(other):
-            return NotImplemented
-        return self.__cmp(other) <= 0
+        return self == other or self < other
     
     def __gt__(self, other):
         if not self.__comparable(other):
             return NotImplemented
-        return self.__cmp(other) > 0
+        od = other.date() if isinstance(other, datetime.datetime) else other.__date
+        ot = other.time() if isinstance(other, datetime.datetime) else other.__time
+        return (self.__date > od or (self.__date == od and self.__time > ot))
     
     def __ge__(self, other):
-        if not self.__comparable(other):
-            return NotImplemented
-        return self.__cmp(other) >= 0
+        return self == other or self > other
     
     def __comparable(self, other):
-        return (isinstance(other, isodate) or
-            isinstance(other, datetime.date) or
+        return (isinstance(other, isodatetime) or
             isinstance(other, datetime.datetime))
-    
-    def __cmp(self, other):
-        return self.toordinal() - other.toordinal()
     
     def __hash__(self):
         return hash(bytes(self))

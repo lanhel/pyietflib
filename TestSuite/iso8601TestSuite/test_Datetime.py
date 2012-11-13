@@ -73,9 +73,11 @@ class TestDatetime(unittest.TestCase):
         self.assertEqual("Mon Aug 29 05:35:32 1966", test.ctime())
         self.assertEqual("Mon Aug 29 05:35:32 1966", test.strftime("%a %b %d %H:%M:%S %Y"))
         
-        self.assertEqual(datetime.datetime.today(), isodatetime.today())
-        self.assertEqual(datetime.datetime.now(), isodatetime.now())
-        self.assertEqual(datetime.datetime.utcnow(), isodatetime.utcnow())
+        # These have microseconds which will always be different
+        #self.assertEqual(datetime.datetime.today(), isodatetime.today())
+        #self.assertEqual(datetime.datetime.now(), isodatetime.now())
+        #self.assertEqual(datetime.datetime.utcnow(), isodatetime.utcnow())
+        
         self.assertEqual(datetime.datetime.fromtimestamp(453265), isodatetime.fromtimestamp(453265))
         self.assertEqual(datetime.datetime.utcfromtimestamp(453265), isodatetime.utcfromtimestamp(453265))
         #self.assertEqual(datetime.datetime.fromordinal(21234), isodatetime.utcfromtimestamp(21234))

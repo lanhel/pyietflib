@@ -25,6 +25,7 @@ import re
 import datetime
 
 from .parameter import *
+from pyietflib.iso8601 import parse_iso8601
 
 __all__ = ['property_from_contentline',
     'ADR', 'ANNIVERSARY', 'BDAY', 'BEGIN', 'CALADRURI', 'CALURI',
@@ -67,6 +68,7 @@ class Property():
         self.__value = value
         self.__group = group
         self.__parameters = params if not None else []
+        self.parse_value(value)
     
     def __str__(self):
         ret = []
@@ -105,6 +107,11 @@ class Property():
         value = value.replace('\n', '\\n')
         value = value.replace('\r', '\\r')
         self.__value = value
+        self.parse_value(value)
+    
+    @property
+    def typed_value(self):
+        pass
     
     @property
     def parameters(self):
@@ -191,25 +198,31 @@ class BDAY(Property):
     cardinality = '*1'
     parameters_allowed = ('altid', 'calscale', 'any')
     
+    def parse_value(self, value):
+        self.date = parse_iso8601(value)[0]
+    
 class ANNIVERSARY(Property):
     """`§ 6.2.6 <http://tools.ietf.org/html/rfc6350#section-6.2.6>`_"""
     value_type = datetime.datetime
     cardinality = '*1'
     parameters_allowed = ('altid', 'calscale', 'any')
     
+    def parse_value(self, value):
+        self.date = parse_iso8601(value)[0]
+    
 class GENDER(Property):
     """`§ 6.2.7 <http://tools.ietf.org/html/rfc6350#section-6.2.7>`_"""
     value_type = str
-    value_re = re.compile(r'^([MFONU]?)(;(.+))?$', flags=re.ASCII|re.VERBOSE)
+    value_re = re.compile(r'(?ax)^(?P<code>[MFONU]?)(;(?P<identity>.+))?$', flags=re.ASCII|re.VERBOSE)
     cardinality = '1'
     parameters_allowed = ('any',)
     
     def parse_value(self, value):
-        mo = value_re.match(value)
+        mo = self.value_re.match(value)
         if not mo:
             raise ValueError("Invalid GENDER value `{0}`.".format(value))
-        self.code = mo.group(1)
-        self.identity = mo.group(3)
+        self.code = mo.group("code")
+        self.identity = mo.group("identity")
     
     
 ###
