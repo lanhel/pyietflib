@@ -34,7 +34,7 @@ __all__ = ['property_from_contentline',
     'REV', 'ROLE', 'SOUND', 'SOURCE', 'TEL', 'TITLE', 'TZ', 'UID',
     'URL', 'XML',
     'ExtendedProperty', 'IANAProperty' ]
-__log__ = logging.getLogger(__name__)
+__log__ = logging.getLogger('rfc6350')
 
 
 class URI():
@@ -484,10 +484,9 @@ contentline_re = re.compile(r"""^
     (:(?P<value>.+))
     \r\n$""", flags=re.VERBOSE)
 
-params_re = re.compile(r""";
-    (?P<pname>[-a-zA-Z0-9]+)
-    =
-    (?P<pvalue>([^";:]*)|("[^"]*"))
+params_re = re.compile(r"""
+    ;(?P<pname>[-a-zA-Z0-9]+)
+    =(?P<pvalue>(([^";:]+)|("[^"]+")))
 """, flags=re.VERBOSE)
 
 def property_from_contentline(value, line=0):
@@ -502,12 +501,12 @@ def property_from_contentline(value, line=0):
     if isinstance(value, bytes) or isinstance(value, bytearray):
         value = value.decode('UTF-8')
     if not isinstance(value, str):
-        raise TypeError("Invalid type `{0}` for content-line.".format(type(value)))
+        raise TypeError('Invalid type `{0}` for content-line[{1}]: "{2:.30s}...".'.format(type(value), line, value))
     
     # Parse the content-line
     mo = contentline_re.match(value)
     if not mo:
-        raise ValueError("Unable to parse content-line[{0}].".format(line))
+        raise ValueError('Unable to parse content-line[{0}]: "{1:.30s}...".'.format(line, value))
     
     group = mo.group('group')
     name = mo.group('name')
@@ -520,7 +519,7 @@ def property_from_contentline(value, line=0):
     while pmo:
         pname = pmo.group('pname')
         pvalue = pmo.group('pvalue')
-        start = params_start + pmo.start()
+        start = params_start + pmo.start() + 1
         params.append(build_parameter(pname, pvalue, line=line, column=start))
         pmo = params_re.match(mo.group('params'), pmo.end())
     
@@ -531,4 +530,6 @@ def property_from_contentline(value, line=0):
         return ExtendedProperty(name, value, group=group, params=params)
     else:
         return IANAProperty(name, value, group=group, params=params)
+
+
 

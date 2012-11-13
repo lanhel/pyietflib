@@ -51,6 +51,7 @@ setup(
     #scripts=[],
     #data_files=[],
     packages=['pyietflib',
+        'pyietflib/iso8601',
         'pyietflib/rfc2045',
         'pyietflib/rfc5646',
         'pyietflib/rfc5870',

@@ -138,58 +138,38 @@ class __TestCommand(Command):
             self.cov = coverage.coverage(branch=True, config_file=True, omit=omit)
         else:
             self.cov = NoCoverage()
-        
-    def __tests(self, suite):
-        ret = []
-        for t in suite:
-            if isinstance(t, unittest.TestSuite):
-                ret.extend(self.__tests(t))
-            else:
-                ret.append(t)
-        return ret
     
     def build_test_suite(self):
         #Clear the cache of anything to do with this build so it will reload.
         #If this is not done then strange ImportError are thrown.
+        def list_tests(suite):
+            ret = []
+            for t in suite:
+                if isinstance(t, unittest.TestSuite):
+                    ret.extend(list_tests(t))
+                else:
+                    ret.append(t)
+            return ret
+
         cacheclear = [i for i in sys.path_importer_cache
                         if os.path.abspath(i).startswith(os.getcwd())]
         for i in cacheclear:
             del sys.path_importer_cache[i]
         
         #Find all test suites to run
-        if self.debug is None:
+        if self.suite:
+            self.suite = unittest.TestLoader().loadTestsFromName(self.suite)
+        elif self.debug:
+            self.suite = unittest.TestLoader().loadTestsFromName(self.debug)
+            tests = list_tests(self.suite)
+            if len(tests) < 1:
+                raise DistutilsArgError("No test case to execute.")
+            if len(tests) > 1:
+                raise DistutilsArgError("Only one test case for debug allowed.")
+        else:
             self.cov.start()
             self.suite = getattr(__import__('TestSuite'), self.suite_name)()
             self.cov.stop()
-        else:
-            if re.match(r"^.+\.test[^.]+$", self.debug):
-                module, self.method = self.debug.rsplit('.', 1)
-            else:
-                module = self.debug
-                self.method = "runTest"
-            module = self.debug
-            module = module.replace('.', '/')
-            module = os.path.join(self.test_lib, module)
-            if os.path.isfile(module + '.py'):
-                self.method = "runTest"
-            elif os.path.isfile(os.path.dirname(module) + '.py'):
-                self.method = os.path.basename(module)
-                module = os.path.dirname(module)
-            else:
-                print("Unknown module and method:", self.debug, file=sys.stderr)
-                sys.exit(1)
-            module = module.replace(self.test_lib + '/', '')
-            module = module.replace('/', '.')
-            module = '.'.join([self.test_base, module])
-            module = __import__(module)
-            
-            self.suite = unittest.TestLoader().loadTestsFromModule(module)
-            self.case = self.__tests(self.suite)
-            self.case = [c for c in self.case if str(c).startswith(self.method)]
-            assert len(self.case) >= 1, "Debug cannot handle multiple cases."
-            if not self.case:
-                raise DistutilsArgError("No test case chosen")
-            self.case = self.case[0]
     
     def run_test_suite(self):
         #Run the tests
@@ -212,7 +192,7 @@ class __TestCommand(Command):
                 db.rcLines.append('b self.tearDown')
             db.rcLines.append('c')
             db.rcLines.append('l')
-            db.runcall(self.case.debug)
+            db.runcall(self.suite.debug)
     
     def run(self):
         self.build_test_suite()

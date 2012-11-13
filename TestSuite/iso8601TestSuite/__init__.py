@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""pyietfrfc unit test suite."""
+"""Unit tests `ISO 8601:2004 Representation of dates and
+times <http://www.iso.org/iso/catalogue_detail?csnumber=40874>`_.
+"""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
@@ -20,10 +22,22 @@ limitations under the License.
 """
 __docformat__ = "reStructuredText en"
 
-from .UnitTestSuite import *
-from .SmokeAcceptSuite import *
-from .SanityAcceptSuite import *
-from .ShakedownAcceptSuite import *
+import os
+import unittest
 
-from .utils import *
+from TestSuite import utils
 
+def test_suite():
+    return unittest.defaultTestLoader.discover(os.path.dirname(__file__), pattern='test_*')
+
+def smoke_suite():
+    suite = utils.smoke_suite(os.path.dirname(__file__))
+    return suite
+
+def sanity_suite():
+    suite = utils.sanity_suite(os.path.dirname(__file__))
+    return suite
+
+def shakedown_suite():
+    suite = utils.shakedown_suite(os.path.dirname(__file__))
+    return suite
