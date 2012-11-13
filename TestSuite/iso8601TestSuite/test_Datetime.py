@@ -34,7 +34,6 @@ class TestDatetime(unittest.TestCase):
         self.assertEqual(date, x.date())
         self.assertEqual(time, x.time())
     
-    @unittest.skip("")
     def test_functionality(self):
         """Basic functionality tests over all representations."""
         date = datetime.date(1966, 8, 29)
@@ -58,7 +57,7 @@ class TestDatetime(unittest.TestCase):
         self.assertEqual(1966, test.year)
         self.assertEqual(8, test.month)
         self.assertEqual(29, test.day)
-        self.assertEqual((1966, 8, 29, 0, 0, 0, 0, 241, -1), tuple(test.timetuple()))
+        self.assertEqual((1966, 8, 29, 5, 35, 32, 0, 241, -1), tuple(test.timetuple()))
         self.assertEqual(717942, test.toordinal())
         self.assertEqual(0, test.weekday())
         self.assertEqual(1, test.isoweekday())
@@ -79,7 +78,7 @@ class TestDatetime(unittest.TestCase):
         self.assertEqual(datetime.datetime.utcnow(), isodatetime.utcnow())
         self.assertEqual(datetime.datetime.fromtimestamp(453265), isodatetime.fromtimestamp(453265))
         self.assertEqual(datetime.datetime.utcfromtimestamp(453265), isodatetime.utcfromtimestamp(453265))
-        self.assertEqual(datetime.datetime.fromordinal(21234), isodatetime.utcfromtimestamp(21234))
+        #self.assertEqual(datetime.datetime.fromordinal(21234), isodatetime.utcfromtimestamp(21234))
         self.assertEqual(datetime.datetime.combine(date, time), isodatetime.combine(date, time))
         self.assertEqual(
             datetime.datetime.strptime("Mon Aug 29 05:35:32 1966", "%a %b %d %H:%M:%S %Y"),
@@ -91,7 +90,6 @@ class TestDatetime(unittest.TestCase):
         self.assert_datetime(date, time, "1966241T053532")
         self.assert_datetime(date, time, "1966W351T053532")
 
-    @unittest.skip("")
     def test_complete(self):
         """ISO 8601 §5.4.1 Complete representation."""
         date = datetime.date(1966, 8, 29)

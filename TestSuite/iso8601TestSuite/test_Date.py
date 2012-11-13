@@ -24,6 +24,91 @@ import datetime
 import unittest
 
 from pyietflib.iso8601 import *
+import pyietflib.iso8601.date as dm
+
+class TestJulianDay(unittest.TestCase):
+    """Test the conversion methods from ISO 8601 date formats to Julian
+    Day and back."""
+    
+    # http://www.fourmilab.ch/documents/calendar/
+    
+    def test_gregorian(self):
+        """Test gregorian - julian day conversions."""
+        # 1 Jan 4713 BC proleptic Julian calendar is the same as
+        # 24 Nov 4714 BC proleptic Gregorian calendar which is the
+        # same as -4713-11-24 astronomical calendar
+        self.assertEqual(0, dm.julianday_from_gregorian(-4713, 11, 24))
+        self.assertEqual((-4713, 11, 24), dm.gregorian_from_julianday(0))
+        
+        self.assertEqual(1721425, dm.julianday_from_gregorian(0, 12, 31))
+        self.assertEqual((0, 12, 31), dm.gregorian_from_julianday(1721425))
+        
+        self.assertEqual(1721426, dm.julianday_from_gregorian(1, 1, 1))
+        self.assertEqual((1, 1, 1), dm.gregorian_from_julianday(1721426))
+        
+        self.assertEqual(1721456, dm.julianday_from_gregorian(1, 1, 31))
+        self.assertEqual((1, 1, 31), dm.gregorian_from_julianday(1721456))
+        
+        self.assertEqual(2406029, dm.julianday_from_gregorian(1875, 5, 20))
+        self.assertEqual((1875, 5, 20), dm.gregorian_from_julianday(2406029))
+        
+        self.assertEqual(2456226, dm.julianday_from_gregorian(2012, 10, 25))
+        self.assertEqual((2012, 10, 25), dm.gregorian_from_julianday(2456226))
+        
+        self.assertEqual(2488070, dm.julianday_from_gregorian(2100, 1, 1))
+        self.assertEqual((2100, 1, 1), dm.gregorian_from_julianday(2488070))
+    
+    def test_ordinal(self):
+        """Test ordinal - julian day conversions."""
+        # 1 Jan 4713 BC proleptic Julian calendar is the same as
+        # 24 Nov 4714 BC proleptic Gregorian calendar which is the
+        # same as -4713-11-24 astronomical calendar
+        self.assertEqual(0, dm.julianday_from_isoordinal(-4713, 328))
+        self.assertEqual((-4713, 328), dm.isoordinal_from_julianday(0))
+        
+        self.assertEqual(1721425, dm.julianday_from_isoordinal(0, 366))
+        self.assertEqual((0, 366), dm.isoordinal_from_julianday(1721425))
+        
+        self.assertEqual(1721426, dm.julianday_from_isoordinal(1, 1))
+        self.assertEqual((1, 1), dm.isoordinal_from_julianday(1721426))
+        
+        self.assertEqual(1721456, dm.julianday_from_isoordinal(1, 31))
+        self.assertEqual((1, 31), dm.isoordinal_from_julianday(1721456))
+        
+        self.assertEqual(2406029, dm.julianday_from_isoordinal(1875, 140))
+        self.assertEqual((1875, 140), dm.isoordinal_from_julianday(2406029))
+        
+        self.assertEqual(2456226, dm.julianday_from_isoordinal(2012, 299))
+        self.assertEqual((2012, 299), dm.isoordinal_from_julianday(2456226))
+        
+        self.assertEqual(2488070, dm.julianday_from_isoordinal(2100, 1))
+        self.assertEqual((2100, 1), dm.isoordinal_from_julianday(2488070))
+    
+    def test_weekday(self):
+        """Test weekday - julian day conversions."""
+        # 1 Jan 4713 BC proleptic Julian calendar is the same as
+        # 24 Nov 4714 BC proleptic Gregorian calendar which is the
+        # same as -4713-11-24 astronomical calendar
+        self.assertEqual(0, dm.julianday_from_isoweekdate(-4713, 48, 1))
+        self.assertEqual((-4713, 48, 1), dm.isoweekdate_from_julianday(0))
+        
+        self.assertEqual(1721425, dm.julianday_from_isoweekdate(0, 52, 7))
+        self.assertEqual((0, 52, 7), dm.isoweekdate_from_julianday(1721425))
+        
+        self.assertEqual(1721426, dm.julianday_from_isoweekdate(1, 1, 1))
+        self.assertEqual((1, 1, 1), dm.isoweekdate_from_julianday(1721426))
+        
+        self.assertEqual(1721456, dm.julianday_from_isoweekdate(1, 5, 3))
+        self.assertEqual((1, 5, 3), dm.isoweekdate_from_julianday(1721456))
+        
+        self.assertEqual(2406029, dm.julianday_from_isoweekdate(1875, 20, 4))
+        self.assertEqual((1875, 20, 4), dm.isoweekdate_from_julianday(2406029))
+        
+        self.assertEqual(2456226, dm.julianday_from_isoweekdate(2012, 43, 4))
+        self.assertEqual((2012, 43, 4), dm.isoweekdate_from_julianday(2456226))
+        
+        self.assertEqual(2488070, dm.julianday_from_isoweekdate(2099, 53, 5))
+        self.assertEqual((2099, 53, 5), dm.isoweekdate_from_julianday(2488070))
 
 class TestDateCalendar(unittest.TestCase):
     """This will test ISO 8601 §5.2.1 calendar date parsing and
@@ -70,11 +155,8 @@ class TestDateCalendar(unittest.TestCase):
     def test_computation(self):
         """Test the compuation methods for all ISO date fields."""
         
-        self.assertEqual((0, 19, 66, 8, 29), isodate.calendar_from_ordinal(0, 19, 66, 241))
-        self.assertEqual((0, 19, 66, 241), isodate.ordinal_from_calendar(0, 19, 66, 8, 29))
-        
-        self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=-1)
-        self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=366)
+        self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=0)
+        self.assertRaises(ValueError, isodate.compute_all_fields, dayofyear=367)
         
         ### Check some basic day of year calculations
         self.assertEqual((0, 0, 1,  1,  1,   1,  0, 0, 1,  1, 1), isodate.compute_all_fields())
@@ -318,7 +400,6 @@ class TestDateOrdinal(unittest.TestCase):
         self.assert_date("+221966241", "+221966-241", expanded=22, century=19, year=66, dayofyear=241)
 
 
-
 class TestDateWeek(unittest.TestCase):
     """This will test ISO 8601 week date parsing and formatting."""
     def assert_date(self, basic, extended, reduced=None, truncated=None,
@@ -359,14 +440,11 @@ class TestDateWeek(unittest.TestCase):
     def test_computation(self):
         """Test the compuation methods for all ISO date fields."""
         
-        self.assertEqual((19, 6, 6, 35, 1), isodate.weekdate_from_ordinal(0, 19, 66, 241))
-        self.assertEqual((0, 19, 66, 241), isodate.ordinal_from_weekdate(19, 6, 6, 35, 1))
-        
         self.assertRaises(ValueError, isodate.compute_all_fields, weekofyear=-1)
         self.assertRaises(ValueError, isodate.compute_all_fields, weekofyear=54)
         
         ### Check some basic day of year calculations
-        self.assertEqual((0, 19, 66, 8, 29, 240, 19, 6, 6, 35, 1),
+        self.assertEqual((0, 19, 66, 8, 29, 241, 19, 6, 6, 35, 1),
             isodate.compute_all_fields(
                 weekcentury=19, weekdecade=6, weekyearofdec=6,
                 weekofyear=35, dayofweek=1))
@@ -413,7 +491,6 @@ class TestDateWeek(unittest.TestCase):
 
     def test_expanded_day(self):
         """ISO 8601 §5.2.3.4 (b) A specific week."""
-        print("SPAM_+_+_+_+_+_+_+_+_+_+_+_+_+")
         self.assert_date("+221966W35", "+221966-W35", expanded=22, century=19, decade=6, year=6, weekofyear=35, reduced=WEEKOFYEAR)
 
 

@@ -615,9 +615,9 @@ class isotime():
         return name
     
     def dst(self):
-        if self._tzinfo is None:
+        if self.__tzinfo is None:
             return None
-        offset = self._tzinfo.dst(None)
+        offset = self.__tzinfo.dst(None)
         self.__check_utc_offset("dst", offset)
         return offset
 

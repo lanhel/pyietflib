@@ -29,6 +29,7 @@ import datetime
 import time
 import re
 import string
+import math
 
 from .date import *
 from .time import *
@@ -112,12 +113,24 @@ class isodatetime():
                 weekcentury=None, weekdecade=None, weekyearofdec=None,
                 weekofyear=None, dayofweek=None,
                 hour=None, minute=None, second=None, microsecond=None,
-                tzinfo=None):
+                tzinfo=None,
+                date=None, time=None):
         
-        self.__date = isodate(
-            expanded, century, year, month, dayofmonth, dayofyear,
-            weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
-        self.__time = isotime(hour, minute, second, microsecond, tzinfo)
+        if date:
+            if not isinstance(date, isodate):
+                raise TypeError("Date must be of type isodate.")
+            self.__date = date
+        else:
+            self.__date = isodate(
+                expanded, century, year, month, dayofmonth, dayofyear,
+                weekcentury, weekdecade, weekyearofdec, weekofyear, dayofweek)
+        
+        if time:
+            if not isinstance(time, isotime):
+                raise TypeError("Time must be of type isotime.")
+            self.__time = time
+        else:
+            self.__time = isotime(hour, minute, second, microsecond, tzinfo)
 
     __today_expire = 0
     __today_cache = None
@@ -136,17 +149,44 @@ class isodatetime():
             cls.__today_expire = time.mktime((tt.tm_year, tt.tm_mon, tt.tm_mday+1, 0, 0, 0, 0, 0, 0))
         assert cls.__today_cache, "No cached isodate."
         return cls.__today_cache
-
+    
     @classmethod
-    def fromtimestamp(cls, timestamp):
+    def now(cls, tz=None):
+        return cls.fromtimestamp(time.time(), tz=tz)
+    
+    @classmethod
+    def utcnow(cls):
+        return cls.utcfromtimestamp(time.time())
+    
+    @classmethod
+    def fromtimestamp(cls, timestamp, tz=None):
         """Return the local date corresponding to the POSIX timestamp,
         such as is returned by `time.time()`.
         
         See `datetime.datetime.fromtimestamp` for more details.
         """
-        dt = datetime.datetime.fromtimestamp(timestamp)
-        return cls.fromdatetime(dt)
-
+        us, secs = math.modf(timestamp)
+        us = round(us * 1e6)
+        if us == 1e6:
+            secs += 1
+            us = 0
+        if tz is None:
+            y, m, d, hh, mm, ss, wday, yday, isdst = time.localtime(secs)
+        else:
+            y, m, d, hh, mm, ss, wday, yday, isdst = time.gmtime(secs)
+        ss = min(ss, 59)
+        d = isodate(expanded=None, century=(y // 100), year=(y % 100),
+            month=m, dayofmonth=d,
+            dayofyear=yday,
+            weekcentury=None, weekdecade=None, weekyearofdec=None,
+            weekofyear=None, dayofweek=None)
+        t = isotime(hour=hh, minute=mm, second=ss, microsecond=us, tzinfo=tz)
+        return isodatetime(date=d, time=t)
+    
+    @classmethod
+    def utcfromtimestamp(cls, timestamp):
+        return cls.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+    
     @classmethod
     def fromordinal(cls, ordinal):
         """Return the date corresponding to the proleptic Gregorian ordinal,
@@ -167,33 +207,35 @@ class isodatetime():
         """
         if isinstance(date, datetime.date):
             date = isodate.fromdatetime(date)
-        return isodatetime(expanded=date.iso_expanded,
-                century=date.iso_century, year=date.iso_year,
-                month=date.iso_month, dayofmonth=date.iso_dayofmonth,
-                dayofyear=date.iso_dayofyear,
-                weekcentury=date.iso_weekcentury, weekdecade=date.iso_weekdecade, weekyearofdec=date.iso_weekyearofdec,
-                weekofyear=date.iso_weekofyear, dayofweek=date.iso_dayofweek,
-                hour=time.hour, minute=time.minute, second=time.second, microsecond=time.microsecond,
-                tzinfo=time.tzinfo)
+        if isinstance(time, datetime.time):
+            time = isotime(hour=time.hour, minute=time.minute, second=time.second,
+                microsecond=time.microsecond, tzinfo=time.tzinfo)
+        return isodatetime(date=date, time=time)
     
     @classmethod
     def fromdatetime(cls, dt):
         """Construct an isodatetime from a `datetime.date`,
         `datetime.datetime`, or any object duck typed to those objects."""
         tt = dt.timetuple()
+        y, m, d, hh, mm, ss, wday, yday, dst = tt
         wy, woy, dow = dt.isocalendar()
         wc = wy // 100
         wd = wy % 100 // 10
         wy = wy % 10
         ret = cls(
-            expanded=0, century=(dt.year // 100), year=(dt.year % 100),
-            month=dt.month, dayofmonth=dt.day,
-            dayofyear=tt.tm_yday,
+            expanded=0, century=(y // 100), year=(y % 100),
+            month=m, dayofmonth=d,
+            dayofyear=yday,
             weekcentury=wc, weekdecade=wd, weekyearofdec=wy, weekofyear=woy, dayofweek=dow,
-            hour=tt.tm_hour, minute=tt.tm_minute, second=tt.tm_second
+            hour=hh, minute=mm, second=ss
         )
         ret.iso_implied = None
         return ret
+    
+    @classmethod
+    def strptime(cls, date_string, format):
+        t = time.mktime(time.strptime(date_string, format))
+        return cls.fromtimestamp(t)
     
     @classmethod
     def parse_iso(cls, value, expand_digits=None):
@@ -378,93 +420,31 @@ class isodatetime():
     
 
     def isoformat(self, representation=CALENDAR, basic=False,
-                reduced=None, truncated=None, expanded=False):
-        """Return a string representing the date in ISO 8601 format.
+                reduced=None, truncated=None, expanded=False,
+                fraction=True, preferred_mark=False, timezone=True,
+                separator='T'):
+        """Return a string representing the date time in ISO 8601 format.
         
-        `representation` may be `CALENDAR` (default), `ORDINAL`, or
-        `WEEK` which will determine if the representation is a §5.2.1
-        Calendar date, §5.2.2 Ordinal date, or §5.2.3 Week date. If
-        this is `WEEK` and `year_of_decade` is True then §5.2.3.3 (c)
-        or (d) will be selected (note: `year_of_decade` with `CALENDAR`
-        or `ORDINAL` will result in an exception).
+        ``basic``, ``reduced``, and ``truncated`` are used in the same
+        manner as in ``isodate`` for the date formatting and as in
+        ``isotime`` for the time formatting.
         
-        If `basic` is true then the [-](hypen) is ommitted from the
-        representation, otherwise (default) it will separate the parts
-        of the representation. If there is no extended format then this
-        will be asserted to be true.
+        ``representation`` and ``expanded`` are used in the same manner
+        as specified in ``isodate``.
         
-        For reduced precision set `reduced` to the last part to include
-        (`None` means no reduced precision) based on the representation
-        desired:
-            - `CALENDAR`
-                - `DAYOFMONTH` for a complete representation §5.2.1.1.
-                - `MONTH` for a specific month §5.2.1.2 (a).
-                - `YEAR` for a specific year §5.2.1.2 (b).
-                - `CENTURY` for a specific century §5.2.1.2 (c).
-            
-            - `ORDINAL`
-                - `DAYOFYEAR` for a complete representation §5.2.2.1.
-                - `YEAR` for a specific year §5.2.1.2 (b).
-                - `CENTURY` for a specific century §5.2.1.2 (c).
-            
-            - `WEEK`
-                - `DAYOFWEEK` for a complete representation §5.2.3.1.
-                - `WEEKOFYEAR` for a specific week §5.2.3.2 (a).
-                - `YEAR` for a specific year §5.2.1.2 (b).
-                - `CENTURY` for a specific century §5.2.1.2 (c).
+        ``fraction``, ``preferred_mark``, and ``timezone`` are used in
+        the same manner as specified in ``isotime``.
         
-        For truncated representations set `truncated` to the first part
-        to include (`None` means no truncation) based on the representation
-        desired:
-            - `CALENDAR`
-                - `CENTURY` for a complete representation §5.2.1.1.
-                
-                - `YEAR` for an implied century §5.2.1.3 (a).
-                    - `reduced=MONTH` for specific year and month
-                      §5.2.1.3 (b)
-                    
-                    - `reduced=YEAR` for specific year §5.2.1.3 (c)
-                
-                - `MONTH` for an implied year §5.2.1.3 (d).
-                    - `reduced=MONTH` for specific month §5.2.1.3 (e)
-                
-                - `DAYOFMONTH` for an implied month §5.2.1.3 (f).
-            
-            - `ORDINAL`
-                - `CENTURY` for a complete representation §5.2.2.1.
-                - `YEAR` for an implied century §5.2.2.2 (a).
-                - `DAYOFYEAR` for an implied year §5.2.2.2 (b).
-            
-            - `WEEK`
-                - `CENTURY` for a complete representation §5.2.3.1.
-            
-                - `DECADE` for year, week, and day in an implied
-                  century §5.2.3.3 (a).
-                    - `reduced=WEEKOFYEAR` for year and week in an
-                      implied century §5.2.3.3 (b)
-            
-                - `YEAR` for year of implied decade, week, and day
-                  §5.2.3.3 (c).
-                    - `reduced=WEEKOFYEAR` for year of implied decade
-                      and week §5.2.3.3 (d)
-                
-                - `WEEKOFYEAR` for week and day of implied year §5.2.3.3 (e).
-                    - `reduced=WEEKOFYEAR` for week only of implied
-                      year §5.2.3.3 (f)
-            
-                - `DAYOFWEEK` for day of an implied week §5.2.3.3 (g).
-        
-        Expanded representations will only be created if `expanded` is
-        set to true. Note that if `iso_expanded` is 0 then the
-        representation will have a '+0' before the century even though
-        the ISO 8601 standard allows for the 0 to be missing. No truncation
-        is allowed in an expanded representation, if both expanded and
-        truncated are selected an error will be raised.
-        
-        This will duck type to `datetime.date.isoformat()` if called with
-        no arguments.
+        ``separator`` will change the string used to separate the date
+        from the time with the default being 'T'.
         """
-        pass
+        date = self.__date.isoformat(
+                representation=representation, basic=basic,
+                reduced=reduced, truncated=truncated, expanded=expanded)
+        time = self.__time.isoformat(
+                basic=basic, reduced=reduced, truncated=truncated,
+                fraction=fraction, preferred_mark=preferred_mark, timezone=timezone)
+        return "{0}{1}{2}".format(date, separator, time)
     
     
     ###
@@ -472,18 +452,15 @@ class isodatetime():
     ###
     @property
     def year(self):
-        if self.iso_expanded:
-            return self.iso_expanded * 10000 + self.iso_century * 100 + self.iso_year
-        else:
-            return self.iso_century * 100 + self.iso_year
+        return self.__date.year
     
     @property
     def month(self):
-        return self.iso_month
+        return self.__date.month
     
     @property
     def day(self):
-        return self.iso_dayofmonth
+        return self.__date.day
     
     def date(self):
         return self.__date
@@ -492,37 +469,40 @@ class isodatetime():
         return self.__time
     
     def replace(self, year=None, month=None, day=None):
-        e = self.iso_expanded
-        c = self.iso_century
-        y = self.iso_year
-        m = self.iso_month
-        d = self.iso_dayofmonth
-        if year:
-            c = year // 100
-            y = year % 100
-        if month:
-            m = month
-        if day:
-            d = day
-        fields = self.compute_all_fields(expanded=e, century=c, year=y,
-                month=m, dayofmonth=d)
-        return isodate(*fields)
+        date = self.__date.replace(year, month, day)
+        time = self.__time
+        return isodatetime(
+            expanded=date.iso_expanded, century=date.iso_century, year=date.iso_year,
+            month=date.iso_month, dayofmonth=date.iso_dayofmonth,
+            dayofyear=date.iso_dayofyear,
+            weekcentury=date.iso_weekcentury, weekdecade=date.iso_weekdecade, weekyearofdec=date.iso_weekyearofdec,
+            weekofyear=date.iso_weekofyear, dayofweek=date.iso_dayofweek,
+            hour=time.hour, minute=time.minute, second=time.second, microsecond=time.microsecond,
+            tzinfo=time.tzinfo)
     
     def timetuple(self):
-        return (self.year, self.month, self.day, 0, 0, 0, self.weekday(), self.iso_dayofyear, -1)
+        y, m, d, hh, mm, ss, wday, doy, dst = self.__date.timetuple()
+        hh = self.__time.hour
+        mm = self.__time.minute
+        ss = self.__time.second
+        dst = self.__time.dst()
+        if dst is None:
+            dst = -1
+        else:
+            dst = int(dst != 0)
+        return time.struct_time((y, m, d, hh, mm, ss, wday, doy, dst))
     
     def toordinal(self):
         return self.__date.toordinal()
     
     def weekday(self):
-        return self.__dayofweek - 1
+        return self.__date.weekday()
     
     def isoweekday(self):
-        return self.__dayofweek
+        return self.__date.isoweekday()
     
     def isocalendar(self):
-        return (self.__weekcentury * 100 + self.__weekdecade * 10 + self.__weekyearofdec,
-            self.__weekofyear, self.__dayofweek)
+        return self.__date.isocalendar()
         
     def ctime(self):
         return self.strftime("%a %b %d %H:%M:%S %Y")
