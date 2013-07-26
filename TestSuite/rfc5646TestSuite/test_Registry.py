@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #-----------------------------------------------------------------------------
-"""RFC6350 Unit Test."""
+"""RFC5646 Unit Test."""
 __author__ = ('Lance Finn Helsten',)
 __version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""

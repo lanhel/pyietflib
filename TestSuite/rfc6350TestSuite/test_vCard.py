@@ -74,7 +74,7 @@ NOTE:This is a long descrip
     \xa2 or 27 cents.
 END:VCARD
 """.replace(os.linesep.encode("UTF-8"), b'\r\n')))
-        self.assertEquals("This is a long description that exists on a long line. Price is 27¢ or 27 cents.", x["NOTE"][0].value)
+        self.assertEqual("This is a long description that exists on a long line. Price is 27¢ or 27 cents.", x["NOTE"][0].value)
     
     
     @unittest.skip("This is causing an 'int' object is not subscriptable error.")
@@ -158,8 +158,8 @@ VERSION:4.0
 NOTE:This is a minimal vCard.
 END:VCARD
 """))
-        self.assertEquals("4.0", x.version)
-        self.assertEquals("This is a minimal vCard.", x["NOTE"][0].value)
+        self.assertEqual("4.0", x.version)
+        self.assertEqual("This is a minimal vCard.", x["NOTE"][0].value)
 
 
 
@@ -171,20 +171,20 @@ VERSION:4.0
 NOTE;VALUE=uri;TYPE="work,voice";PREF=1:This is a minimal vCard with params.
 END:VCARD
 """))
-        self.assertEquals("4.0", x.version)
-        self.assertEquals("This is a minimal vCard with params.", x["NOTE"][0].value)
+        self.assertEqual("4.0", x.version)
+        self.assertEqual("This is a minimal vCard with params.", x["NOTE"][0].value)
         
         note = x["NOTE"][0]
         
-        self.assertEquals(3, len(note.parameters))
-        self.assertEquals("VALUE", note.parameters[0].name)
-        self.assertEquals("uri", note.parameters[0].value)
+        self.assertEqual(3, len(note.parameters))
+        self.assertEqual("VALUE", note.parameters[0].name)
+        self.assertEqual("uri", note.parameters[0].value)
 
-        self.assertEquals("TYPE", note.parameters[1].name)
-        self.assertEquals(["work", "voice"], note.parameters[1].value)
+        self.assertEqual("TYPE", note.parameters[1].name)
+        self.assertEqual(["work", "voice"], note.parameters[1].value)
 
-        self.assertEquals("PREF", note.parameters[2].name)
-        self.assertEquals(1, note.parameters[2].value)
+        self.assertEqual("PREF", note.parameters[2].name)
+        self.assertEqual(1, note.parameters[2].value)
 
 
     #@unittest.skip("Complete Complete First")
@@ -213,91 +213,91 @@ TZ:-0500
 URL;TYPE=home:http://nomis80.org
 END:VCARD
 """))
-        self.assertEquals("4.0", x.version)
-        self.assertEquals(1, len(x["LANG"][0].parameters))
+        self.assertEqual("4.0", x.version)
+        self.assertEqual(1, len(x["LANG"][0].parameters))
         
-        self.assertEquals("Simon Perreault", x["FN"][0].value)
-        self.assertEquals(0, len(x["FN"][0].parameters))
+        self.assertEqual("Simon Perreault", x["FN"][0].value)
+        self.assertEqual(0, len(x["FN"][0].parameters))
         
-        self.assertEquals("Perreault;Simon;;;ing. jr,M.Sc.", x["N"][0].value)
-        self.assertEquals(0, len(x["N"][0].parameters))
+        self.assertEqual("Perreault;Simon;;;ing. jr,M.Sc.", x["N"][0].value)
+        self.assertEqual(0, len(x["N"][0].parameters))
         
-        self.assertEquals("--0203", x["BDAY"][0].value)
-        self.assertEquals(iso8601.parse_iso8601("--0203")[0], x["BDAY"][0].date)
-        self.assertEquals(0, len(x["BDAY"][0].parameters))
+        self.assertEqual("--0203", x["BDAY"][0].value)
+        self.assertEqual(iso8601.parse_iso8601("--0203")[0], x["BDAY"][0].date)
+        self.assertEqual(0, len(x["BDAY"][0].parameters))
         
-        self.assertEquals("20090808T1430-0500", x["ANNIVERSARY"][0].value)
-        self.assertEquals(iso8601.parse_iso8601("20090808T1430-0500")[0], x["ANNIVERSARY"][0].date)
-        self.assertEquals(0, len(x["ANNIVERSARY"][0].parameters))
+        self.assertEqual("20090808T1430-0500", x["ANNIVERSARY"][0].value)
+        self.assertEqual(iso8601.parse_iso8601("20090808T1430-0500")[0], x["ANNIVERSARY"][0].date)
+        self.assertEqual(0, len(x["ANNIVERSARY"][0].parameters))
         
-        self.assertEquals("M", x["GENDER"][0].value)
-        self.assertEquals(0, len(x["GENDER"][0].parameters))
+        self.assertEqual("M", x["GENDER"][0].value)
+        self.assertEqual(0, len(x["GENDER"][0].parameters))
         
-        self.assertEquals("fr", x["LANG"][0].value)
-        self.assertEquals(1, len(x["LANG"][0].parameters))
-        self.assertEquals("PREF", x["LANG"][0].parameters[0].name)
-        self.assertEquals(1, x["LANG"][0].parameters[0].value)
+        self.assertEqual("fr", x["LANG"][0].value)
+        self.assertEqual(1, len(x["LANG"][0].parameters))
+        self.assertEqual("PREF", x["LANG"][0].parameters[0].name)
+        self.assertEqual(1, x["LANG"][0].parameters[0].value)
         
-        self.assertEquals("en", x["LANG"][1].value)
-        self.assertEquals(1, len(x["LANG"][1].parameters))
-        self.assertEquals("PREF", x["LANG"][1].parameters[0].name)
-        self.assertEquals(2, x["LANG"][1].parameters[0].value)
+        self.assertEqual("en", x["LANG"][1].value)
+        self.assertEqual(1, len(x["LANG"][1].parameters))
+        self.assertEqual("PREF", x["LANG"][1].parameters[0].name)
+        self.assertEqual(2, x["LANG"][1].parameters[0].value)
         
-        self.assertEquals("Viagenie", x["ORG"][0].value)
-        self.assertEquals(1, len(x["ORG"][0].parameters))
-        self.assertEquals("TYPE", x["ORG"][0].parameters[0].name)
-        self.assertEquals(["work"], x["ORG"][0].parameters[0].value)
+        self.assertEqual("Viagenie", x["ORG"][0].value)
+        self.assertEqual(1, len(x["ORG"][0].parameters))
+        self.assertEqual("TYPE", x["ORG"][0].parameters[0].name)
+        self.assertEqual(["work"], x["ORG"][0].parameters[0].value)
         
-        self.assertEquals(";Suite D2-630;2875 Laurier;Quebec;QC;G1V 2M2;Canada", x["ADR"][0].value)
-        self.assertEquals(1, len(x["ADR"][0].parameters))
-        self.assertEquals("TYPE", x["ADR"][0].parameters[0].name)
-        self.assertEquals(["work"], x["ADR"][0].parameters[0].value)
+        self.assertEqual(";Suite D2-630;2875 Laurier;Quebec;QC;G1V 2M2;Canada", x["ADR"][0].value)
+        self.assertEqual(1, len(x["ADR"][0].parameters))
+        self.assertEqual("TYPE", x["ADR"][0].parameters[0].name)
+        self.assertEqual(["work"], x["ADR"][0].parameters[0].value)
         
-        self.assertEquals("tel:+1-418-656-9254;ext=102", x["TEL"][0].value)
+        self.assertEqual("tel:+1-418-656-9254;ext=102", x["TEL"][0].value)
         #TODO
-        #self.assertEquals(rfc3966.TelURI("tel:+1-418-656-9254;ext=102"), x["TEL"][0].uri)
-        self.assertEquals(3, len(x["TEL"][0].parameters))
-        self.assertEquals("VALUE", x["TEL"][0].parameters[0].name)
-        self.assertEquals("uri", x["TEL"][0].parameters[0].value)
-        self.assertEquals("TYPE", x["TEL"][0].parameters[1].name)
-        self.assertEquals(["work","voice"], x["TEL"][0].parameters[1].value)
+        #self.assertEqual(rfc3966.TelURI("tel:+1-418-656-9254;ext=102"), x["TEL"][0].uri)
+        self.assertEqual(3, len(x["TEL"][0].parameters))
+        self.assertEqual("VALUE", x["TEL"][0].parameters[0].name)
+        self.assertEqual("uri", x["TEL"][0].parameters[0].value)
+        self.assertEqual("TYPE", x["TEL"][0].parameters[1].name)
+        self.assertEqual(["work","voice"], x["TEL"][0].parameters[1].value)
         
-        self.assertEquals("tel:+1-418-262-6501", x["TEL"][1].value)
+        self.assertEqual("tel:+1-418-262-6501", x["TEL"][1].value)
         #TODO
-        #sself.assertEquals(rfc3966.TelURI("tel:+1-418-262-6501"), x["TEL"][1].uri)
-        self.assertEquals(2, len(x["TEL"][1].parameters))
-        self.assertEquals("VALUE", x["TEL"][1].parameters[0].name)
-        self.assertEquals("uri", x["TEL"][1].parameters[0].value)
-        self.assertEquals("TYPE", x["TEL"][1].parameters[1].name)
-        self.assertEquals(["work","cell","voice","video","text"], x["TEL"][1].parameters[1].value)
+        #sself.assertEqual(rfc3966.TelURI("tel:+1-418-262-6501"), x["TEL"][1].uri)
+        self.assertEqual(2, len(x["TEL"][1].parameters))
+        self.assertEqual("VALUE", x["TEL"][1].parameters[0].name)
+        self.assertEqual("uri", x["TEL"][1].parameters[0].value)
+        self.assertEqual("TYPE", x["TEL"][1].parameters[1].name)
+        self.assertEqual(["work","cell","voice","video","text"], x["TEL"][1].parameters[1].value)
         
-        self.assertEquals("simon.perreault@viagenie.ca", x["EMAIL"][0].value)
+        self.assertEqual("simon.perreault@viagenie.ca", x["EMAIL"][0].value)
         #TODO
-        #sself.assertEquals(rfc6068.MailtoURI("mailto:simon.perreault@viagenie.ca"), x["EMAIL"][0].uri)
-        self.assertEquals(1, len(x["EMAIL"][0].parameters))
-        self.assertEquals("TYPE", x["EMAIL"][0].parameters[0].name)
-        self.assertEquals(["work"], x["EMAIL"][0].parameters[0].value)
+        #sself.assertEqual(rfc6068.MailtoURI("mailto:simon.perreault@viagenie.ca"), x["EMAIL"][0].uri)
+        self.assertEqual(1, len(x["EMAIL"][0].parameters))
+        self.assertEqual("TYPE", x["EMAIL"][0].parameters[0].name)
+        self.assertEqual(["work"], x["EMAIL"][0].parameters[0].value)
         
-        self.assertEquals("geo:46.772673,-71.282945", x["GEO"][0].value)
+        self.assertEqual("geo:46.772673,-71.282945", x["GEO"][0].value)
         #TODO
-        #sself.assertEquals(rfc5870.GeoURI("geo:46.772673,-71.282945"), x["GEO"][0].uri)
-        self.assertEquals(1, len(x["GEO"][0].parameters))
-        self.assertEquals("TYPE", x["GEO"][0].parameters[0].name)
-        self.assertEquals(["work"], x["GEO"][0].parameters[0].value)
+        #sself.assertEqual(rfc5870.GeoURI("geo:46.772673,-71.282945"), x["GEO"][0].uri)
+        self.assertEqual(1, len(x["GEO"][0].parameters))
+        self.assertEqual("TYPE", x["GEO"][0].parameters[0].name)
+        self.assertEqual(["work"], x["GEO"][0].parameters[0].value)
         
-        self.assertEquals("http://www.viagenie.ca/simon.perreault/simon.asc", x["KEY"][0].value)
+        self.assertEqual("http://www.viagenie.ca/simon.perreault/simon.asc", x["KEY"][0].value)
         #TODO
-        #sself.assertEquals(rfc2616.HttpURL("http://www.viagenie.ca/simon.perreault/simon.asc"), x["KEY"][0].url)
-        self.assertEquals(2, len(x["KEY"][0].parameters))
-        self.assertEquals("TYPE", x["KEY"][0].parameters[0].name)
-        self.assertEquals(["work"], x["KEY"][0].parameters[0].value)
+        #sself.assertEqual(rfc2616.HttpURL("http://www.viagenie.ca/simon.perreault/simon.asc"), x["KEY"][0].url)
+        self.assertEqual(2, len(x["KEY"][0].parameters))
+        self.assertEqual("TYPE", x["KEY"][0].parameters[0].name)
+        self.assertEqual(["work"], x["KEY"][0].parameters[0].value)
         
-        self.assertEquals("-0500", x["TZ"][0].value)
+        self.assertEqual("-0500", x["TZ"][0].value)
         
-        self.assertEquals("http://nomis80.org", x["URL"][0].value)
+        self.assertEqual("http://nomis80.org", x["URL"][0].value)
         #TODO
-        #sself.assertEquals(rfc2616.HttpURL("http://nomis80.org"), x["URL"][0].url)
-        self.assertEquals(1, len(x["URL"][0].parameters))
-        self.assertEquals("TYPE", x["URL"][0].parameters[0].name)
-        self.assertEquals(["home"], x["URL"][0].parameters[0].value)
+        #sself.assertEqual(rfc2616.HttpURL("http://nomis80.org"), x["URL"][0].url)
+        self.assertEqual(1, len(x["URL"][0].parameters))
+        self.assertEqual("TYPE", x["URL"][0].parameters[0].name)
+        self.assertEqual(["home"], x["URL"][0].parameters[0].value)
 

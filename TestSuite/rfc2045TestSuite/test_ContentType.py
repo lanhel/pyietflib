@@ -153,17 +153,17 @@ class TestContentType(unittest.TestCase):
     def test_image_parameters(self):
         """Check valid and default parameters for `image/*`."""
         x = ContentType('image/jpeg')
-        self.assertEquals(0, len(x.keys()))
+        self.assertEqual(0, len(x.keys()))
     
     def test_audio_parameters(self):
         """Check valid and default parameters for `audio/*`."""
         x = ContentType('audio/basic')
-        self.assertEquals(0, len(x.keys()))
+        self.assertEqual(0, len(x.keys()))
     
     def test_video_parameters(self):
         """Check valid and default parameters for `video/*`."""
         x = ContentType('video/mpeg')
-        self.assertEquals(0, len(x.keys()))
+        self.assertEqual(0, len(x.keys()))
     
     def test_application_parameters(self):
         """Check valid and default parameters for `application/*`."""
@@ -172,7 +172,7 @@ class TestContentType(unittest.TestCase):
         self.assertEqual('8', x['padding'])
         
         x = ContentType('application/postscript')
-        self.assertEquals(0, len(x.keys()))
+        self.assertEqual(0, len(x.keys()))
     
     @unittest.skip("Untested for version 1")
     def test_message_parameters(self):
