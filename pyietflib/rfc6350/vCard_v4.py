@@ -1,21 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Parser for vCard v4 as defined in RFC6350"""
-__version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
-__license__ = """
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+from .__meta__ import (__version__, __author__, __license__)
 
 import sys
 if sys.version_info < (3, 2):
@@ -114,7 +101,7 @@ def SAFE_CHAR(parser, rule, values):
 def VALUE_CHAR(parser, rule, values):
      'Any textual character'
      print(rule.__name__, parser)
- 
+
 
 #======================================
 # 4 Property Value Data Types
@@ -416,7 +403,7 @@ def empty(self):
 
 if __name__ == '__main__':
     import io
-    
+
     data = b'''\
 BEGIN:VCARD
 VERSION:4.0
@@ -443,13 +430,13 @@ CLIENTPIDMAP:1;urn:uuid:53e374d9-337e-4727-8803-a1e9c14e0556
 CLIENTPIDMAP:2;urn:uuid:1f762d2b-03c4-4a83-9a03-75ff658a6eee
 END:VCARD
         '''
-    
+
     fd = io.BytesIO(data)
     p = Parser(fd, text=False)
     for x in p:
         print(x)
     print(p["vcard-entity"])
     print(p["vcard-entity"].ruledef)
-    
-    
+
+
 

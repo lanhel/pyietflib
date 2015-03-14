@@ -4,21 +4,8 @@
 times <http://www.iso.org/iso/catalogue_detail?csnumber=40874>`_ date
 parsing and formatting.
 """
-__version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
-__license__ = """
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+from .__meta__ import (__version__, __author__, __license__)
 
 import sys
 if sys.version_info < (3, 2):
@@ -123,7 +110,7 @@ def gregorian_from_julianday(jd):
     j = j + 2 - 12 * l
     i = 100 * (n - 49) + i + l
     return i, j, k
-    
+
     J = jd + 0.5                            #Shift to 00:00Z
     j = J + 32044                           #Shift to astronomical year -4800
     g, dg = divmod(j, 146097)
@@ -177,7 +164,7 @@ class isodate():
     `datetime.date` to add capabilities that are available in
     `ISO 8601:2004 Representation of dates and times
     <http://www.iso.org/iso/catalogue_detail?csnumber=40874>`_.
-    
+
     All arguments are either convertable to positive integers or are
     `None`. If an argument is `None` then the associated property shall
     receive a value based on `iso_implied` where only one of the
@@ -185,31 +172,31 @@ class isodate():
         1. If `dayofyear` is not `None` then do ISO ordinal processing.
             If `expanded`, `century`, or `year` are `None` then they
             get implied values.
-        
+
         2. If `month` or `dayofmonth` is not `None` then do ISO
             Gregorian date processing. If either are `None` then
             they get implied values. If `expanded`, `century`, or
             `year` are `None` then they get implied values.
-        
+
         3. If `expanded`, `century`, or `year` are not `None` then
             use implied values for `month` and `dayofmonth` and do
             ISO Gregorian date processing:
-        
+
         4. If any of `weekcentury`, `weekdecade`, `weekyearofdec`,
             `weekofyear`, or `dayofweek` are not `None` then do ISO
             weekday processing. For all that are `None` then they
             get implied values.
-        
+
     This may create a calendar date (§5.2.1 Calendar date) by using
     `month` and `dayofmonth`; an ordinal date (§5.2.2 Ordinal date)
     by using `dayofyear`; or a week date (§5.2.3 Week date) by using
     `weekyear`, `weekofyear`, and `dayofweek`. If these calendar
     types are mixed it must result in the same day being represented
     otherwise a `ValueError` shall be thrown.
-    
+
     The creation of expanded respresentations may be done by using the
     `expanded` argument.
-    
+
     Reduced precision (§5.2.1.2, §5.2.3.2) and truncated (§5.2.1.2,
     §5.2.2.2, and §5.2.3.3) may be created by igoring some arguments
     or setting those arguments to `None`. The only condition is that
@@ -219,8 +206,8 @@ class isodate():
     precision ordinal date so if an object is created and only `dayofyear`
     is given then a string representation will always have the current
     year.
-    
-    
+
+
     Arguments
     ---------
     expanded
@@ -228,60 +215,60 @@ class isodate():
         before 1 A.D. (`datetime.MINYEAR`) or after 9999 A.D.
         (`datetime.MAXYEAR`). If `None` then this will be set to
         `+00`. If 1 B.C. is desired then this would be set to `-00`.
-    
+
     century
         This represents the century and must be in the range 0 to 99.
-    
+
     year
         This represents the year within the century and must be in the
         range 00 to 99.
-        
+
         This is different from `datetime.date` where the `year` is expected
         to be in the range 1 to 9999. This change is to allow construction
         of reduced, truncated, and expanded representations.
-    
+
     month
         This represents the month of the year and must be in the range
         of 1 to 12.
-    
+
     dayofmonth
         This represents the day of the year and must be in the range of
         1 to 31.
-        
+
         In a truncated representation with an implied `month` then 29,
         30, and 31 are always allowed, and in string representations will
         always be the last day of the month and may be adjusted. For
         example if this is 30 but the current month is February and the
         year is not a leap year then in the string representation this
         will 28.
-    
+
     dayofyear
         This is the ordinal day of the year and must be in the range of
         1 to 366.
-        
+
         If the `century` and `year` are given and it is not a leap year
         then a value of 366 will not be accepted.
-        
+
         In a truncated representation with an implied `year` then 366 is
         always allowed, and in string representations it will always be
         the last day of the year and may be changed to 365.
-    
+
     weekyear
         This is the gregorian year that the week falls in. This is usually
         the same as the actual year, but may be the previous year for week
         52 or 53, or the following year for week 1.
-    
+
     weekofyear
         This is the week of the year in the range 1 to 53.
-        
+
         In a truncated representation with an implied `year` then 53 is
         always allowed, and in string representations it will always be
         the last week of the year and may be changed to 52.
-    
+
     weekday
         This is the day of the week in the range 1 to 7.
-    
-    
+
+
     Class Properties
     ----------------
     months
@@ -289,14 +276,14 @@ class isodate():
         a tuple with the month name from the standard, the number of
         days in the month, the number of days in a leap year, the ordinal
         days, and the ordinal days in a leap year.
-    
+
     weekdays
         Is a list indexed on the ISO weekday number where each element
         is a tuple with the weekday name from the standard, the python
         `datetime.date.weekday` conversion, and the python `time.strftime`
         conversion.
-    
-    
+
+
     Properties
     ----------
     iso_implied
@@ -305,7 +292,7 @@ class isodate():
         `iso_*` properties that are implied to return `None`. The
         initial value for this property is the the same as returned by
         `isodate.today()` when the object was created.
-        
+
         This will attempt to convert other types into an `isodate` object
         according to the following list (other types will be converted
         to a string via `str(value)` and processed like a string):
@@ -318,73 +305,73 @@ class isodate():
             - `tuple`: `fromtimestamp(time.mktime(value))`.
             - `list`: `fromtimestamp(time.mktime(tuple(value)))`
             - `dict`: `fromtimestamp(time.mktime(tuple(value.values)))`
-        
+
         Setting `iso_implied` to `None` will affect all methods that are
         derived from `datetime.date`, thus calling those methods will
         result in undefined behavior. This case is meant for testing or
         if detailed information is desired about the original ISO string.
-    
+
     iso_leap_year
         A boolean that indicates that this is a leap year.
-    
+
     iso_expanded
         This is the expanded year value for years before 1 A.D. and
         after 9999 A.D.
-    
+
     iso_century
         This is the century of the date.
-    
+
     iso_year
         This is the year in the century of the date.
-    
+
     iso_month
         This is the month of the date.
-    
+
     iso_dayofmonth
         This is the day of month of the date.
-    
+
     iso_dayofyear
         This is the day of year of the date. In truncated representations
         if the month is known but the day of month is not known then this
         will be the first day of the month; if the week is known but the
         day of week is not known then this will be the first day of the
         week.
-    
+
     iso_weekyear
         This is the year that `iso_weekofyear` is in. This will be the
         same as the gregorian year except for dates that cross year
         boundaries then it may be the previous year if `iso_dayofweek`
         is Monday (1), Tuesday (2), or Wednesday (3); or in the following
         year if `iso_dayofweek` is Friday (5), Saturday (6), or Sunday (7).
-    
+
     iso_weekofyear
         This is the week of year of the date. In truncated representations
         if the month is known but the day of month is not known then this
         will be the first week of the month.
-        
+
         This may be a negative value which indicates that for the day
         represented the week of year and the day of week are in the
         previous year.
-    
+
     iso_dayofweek
         This is the day of week of the date.
-    
+
     year
         This is the same as `datetime.date.year` in value, but will
         return an implied year if this is reduced precision or truncated
         representation.
-    
+
     month
         This is the same as `datetime.date.month` in value, but will
         return an implied month if this is reduced precision or truncated
         representation.
-    
+
     day
         This is the same as `datetime.date.day` in value but will
         return an implied day if this is reduced precision or truncated
         representation.
-    
-    
+
+
     Built-in Function
     -----------------
     Built in functions may have behavior that seem unusual and are
@@ -392,69 +379,69 @@ class isodate():
         bytes
             This will return a byte string that is a compact encoding
             of the date.
-        
+
         hash
             The hash code is the same as `hash(bytes(obj))`.
-        
+
         int
             This will return the ordinal number of days from 1 Jan 0001.
-        
-    
-    
+
+
+
     Format Specifier
     ----------------
     The following are `isodate` specific `format_spec` symantics for use
     with string formatting:
         fill
             The fill character, if `None` this defaults to space.
-    
+
         align
             May use the '<', '>', or '^' alignment operator.
-    
+
         sign
             If this is '+' or '-' then the expanded representation is used.
-    
+
         #
             The normal format is to use extended unless not applicable
             then use basic. This will force all representations to basic.
-    
+
         0
             This is not allowed because '=' align is not allowed.
-    
+
         width
             The width of the field.
-    
+
         ,
             This is not allowed
-    
+
         precision
             This representation will be shortened to this length.
-        
+
             .. WARNING::
                 Use of precision could result in an invalid ISO 8601
                 reduced precision representation.
-    
+
         type
             s
                 This results in the representation as `str(x)`. The align,
                 width, and precision are used, and all other modifiers are
                 ignored.
-        
+
             c
                 This will generate an ISO 8601 §5.2.1 Calendar date
                 representation.
-        
+
             o
                 This will generate an ISO 8601 §5.2.2 Ordinal date
                 representation.
-        
+
             w
                 This will generate an ISO 8601 §5.2.3 Week date
                 representation.
-    
+
     It is possible to generate reduced precision dates with format, but
     it is not possible to generate truncated representations.
-    
+
     Pickle Notes
     ------------
     If this has an implied date and then pickled and unpickled the implied
@@ -468,14 +455,14 @@ class isodate():
                 dayofyear=None,
                 weekcentury=None, weekdecade=None, weekyearofdec=None,
                 weekofyear=None, dayofweek=None):
-        
+
         if (century is None and year is None and
                 month is None and dayofmonth is None and
                 dayofyear is None and
                 weekcentury is None and weekdecade is None and weekyearofdec is None and
                 weekofyear is None and dayofweek is None):
             raise ValueError("At least one date component must be specified.")
-        
+
         self.__orig_expanded = expanded
         self.__orig_century = int(century) if century is not None else None
         self.__orig_year = int(year) if year is not None else None
@@ -487,7 +474,7 @@ class isodate():
         self.__orig_weekyearofdec = int(weekyearofdec) if weekyearofdec is not None else None
         self.__orig_weekofyear = int(weekofyear) if weekofyear is not None else None
         self.__orig_dayofweek = int(dayofweek) if dayofweek is not None else None
-        
+
         if (expanded is not None and century is not None and year is not None and
                 month is not None and dayofmonth is not None and
                 dayofyear is not None and
@@ -507,10 +494,10 @@ class isodate():
             self.iso_implied = None
         else:
             self.iso_implied = self.today()
-    
+
     months = MONTHS
     weekdays = WEEKDAYS
-    
+
     __epoc = None
     @classmethod
     def epoc(cls):
@@ -521,13 +508,13 @@ class isodate():
                     weekcentury=0, weekdecade=0, weekyearofdec=1,
                     weekofyear=1, dayofweek=1)
         return cls.__epoc
-    
+
     __today_expire = 0
     __today_cache = None
     @classmethod
     def today(cls):
         """Return a current local date.
-        
+
         See `datetime.date.today` for more details.
         """
         t = time.time()
@@ -544,7 +531,7 @@ class isodate():
     def fromtimestamp(cls, timestamp):
         """Return the local date corresponding to the POSIX timestamp,
         such as is returned by `time.time()`.
-        
+
         See `datetime.date.fromtimestamp` for more details.
         """
         dt = datetime.date.fromtimestamp(timestamp)
@@ -554,14 +541,14 @@ class isodate():
     def fromordinal(cls, ordinal):
         """Return the date corresponding to the proleptic Gregorian ordinal,
         where January 1 of year 1 has ordinal 1.
-        
+
         See `datetime.date.fromordinal` for more details.
         """
         if not 0 < ordinal <= datetime.date.max.toordinal():
             raise OverflowError("Date ordinal {0} out of range [0, {1}].".format(ordinal, datetime.date.max.toordinal()))
         dt = datetime.date.fromordinal(ordinal)
         return cls.fromdatetime(dt)
-    
+
     @classmethod
     def fromdatetime(cls, dt):
         """Construct an isodate from a `datetime.date`, `datetime.datetime`,
@@ -579,7 +566,7 @@ class isodate():
         )
         ret.iso_implied = None
         return ret
-    
+
     @classmethod
     def compute_all_fields(cls, expanded=None, century=None, year=None,
             month=None, dayofmonth=None, dayofyear=None,
@@ -588,7 +575,7 @@ class isodate():
         """Given a set of ISO date fields compute all fields that are `None`
         and return the fields in order: expanded, century, year, month,
         dayofmonth, dayofyear, weekyear, weekofyear, dayofweek."""
-        
+
         def cal_year(expanded, century, year, refdate):
             if expanded is None:
                 expanded = refdate.iso_expanded
@@ -597,7 +584,7 @@ class isodate():
             if year is None:
                 year = refdate.iso_year
             return expanded * 10000 + century * 100 + year
-        
+
         def weekday_year(expanded, weekcentury, weekdecade, weekyearofdec, refdate):
             if expanded is None:
                 expanded = refdate.iso_expanded
@@ -608,19 +595,19 @@ class isodate():
             if weekyearofdec is None:
                 weekyearofdec = refdate.iso_weekyearofdec
             return expanded * 10000 + weekcentury * 100 + weekdecade * 10 + weekyearofdec
-        
+
         if refdate is None:
             refdate = cls.epoc()
-        
+
         jd_dayofyear = None
         jd_gregorian = None
         jd_weekday = None
-        
+
         ### Ordinal
         if dayofyear is not None:
             jd_year = cal_year(expanded, century, year, refdate)
             jd_dayofyear = julianday_from_isoordinal(jd_year, dayofyear)
-        
+
         ### Gregorian
         if month is not None:
             jd_year = cal_year(expanded, century, year, refdate)
@@ -631,7 +618,7 @@ class isodate():
             jd_year = cal_year(expanded, century, year, refdate)
             month = refdate.iso_month
             jd_gregorian = julianday_from_gregorian(jd_year, month, dayofmonth)
-        
+
         ### Weekday
         if weekofyear is not None:
             jd_year = weekday_year(expanded, weekcentury, weekdecade, weekyearofdec, refdate)
@@ -642,35 +629,35 @@ class isodate():
             jd_year = weekday_year(expanded, weekcentury, weekdecade, weekyearofdec, refdate)
             weekofyear = refdate.iso_weekofyear
             jd_weekday = julianday_from_isoweekdate(jd_year, weekofyear, dayofweek)
-        
+
         ### Fallback
         if jd_dayofyear is None and jd_gregorian is None and jd_weekday is None:
             jd_year = cal_year(expanded, century, year, refdate)
             month = refdate.iso_month
             dayofmonth = refdate.iso_dayofmonth
             jd_gregorian = julianday_from_gregorian(jd_year, month, dayofmonth)
-        
+
         if jd_dayofyear is not None and jd_gregorian is not None and jd_dayofyear != jd_gregorian:
             raise ValueError("Ordinal and gregorian dates do not match ({0}, {1}).".format(jd_dayofyear, jd_gregorian))
         if jd_dayofyear is not None and jd_weekday is not None and jd_dayofyear != jd_weekday:
             raise ValueError("Ordinal and weekdate dates do not match ({0}, {1}).".format(jd_dayofyear, jd_weekday))
         if jd_gregorian is not None and jd_weekday is not None and jd_gregorian != jd_weekday:
             raise ValueError("Gregorian and weekdate dates do not match ({0}, {1}).".format(jd_gregorian, jd_weekday))
-        
+
         if jd_dayofyear is not None:
             jd = jd_dayofyear
         elif jd_gregorian is not None:
             jd = jd_gregorian
         elif jd_weekday is not None:
             jd = jd_weekday
-        
+
         gy, gm, gd = gregorian_from_julianday(jd)
         oy, doy = isoordinal_from_julianday(jd)
         wy, w, wd = isoweekdate_from_julianday(jd)
         return (gy // 10000, gy % 10000 // 100, gy % 100, gm, gd, doy,
             wy % 10000 // 100, wy % 100 // 10, wy % 10, w, wd)
-    
-    
+
+
     ###
     ### This holds the regular expressions for each type of representation.
     ### It is a dictionary where the key is a tuple of has a hyphen and
@@ -722,12 +709,12 @@ class isodate():
                 re.compile(r'(?ax)-W-(?P<dayofweek>\d{1})')]
         }
     }
-    
+
     @classmethod
     def parse_iso(cls, value, expand_digits=None):
         """Parse an ISO date string in `value` and return an `isodate`
         object.
-        
+
         Expanded Representation
         -----------------------
         An expanded representation is a special case where the number
@@ -761,7 +748,7 @@ class isodate():
         else:
             __log__.debug("Type: {0} {1}".format(rep_type, len(value)))
             raise ValueError('Invalid representation "{0}".'.format(value_org))
-    
+
     @classmethod
     def is_leap_year(cls, expanded=None, century=None, year=None):
         """This will determine if a year is a leap year. If any component
@@ -773,12 +760,12 @@ class isodate():
         if year is None:
             year = isodate.today().iso_year
         return (year % 4 == 0 and (century != 0 or century % 4 == 0))
-    
+
     @classmethod
     def days_in_month(cls, expanded, century, year, month):
         leap = cls.is_leap_year(expanded, century, year)
         return cls.months[month][2 if leap else 1]
-    
+
     @classmethod
     def days_in_year(cls, expanded, century, year):
         return 365 if not cls.is_leap_year(expanded, century, year) else 366
@@ -811,11 +798,11 @@ class isodate():
             fmt.append("dayofweek={0.iso_dayofweek:d}")
         fmt = "isodate({0})".format(', '.join(fmt))
         return fmt.format(self)
-    
+
     def __str__(self):
         """This is the same as calling `isoformat()`."""
         return self.isoformat(representation=CALENDAR, basic=False, expanded=False)
-    
+
     def __bytes__(self):
         if self.__bytes is None:
             self.__bytes = [self.iso_dayofmonth, self.iso_month, self.iso_year, self.iso_century]
@@ -827,7 +814,7 @@ class isodate():
             self.__bytes.reverse()
             self.__bytes = bytes(self.__bytes)
         return self.__bytes
-    
+
     __format_re = re.compile(r"""(?ax)^
             (?P<align>(?P<fill>.)?[<>=\^])?
             (?P<sign>[+\- ])?
@@ -842,7 +829,7 @@ class isodate():
         mo = self.__format_re.match(format_spec)
         if mo.group("comma") is not None:
             raise ValueError("Comma not allowed in isodate format specifier.")
-        
+
         expanded = (mo.group("sign") is not None)
         basic = (mo.group("altform") is not None)
         ftype = mo.group("type")
@@ -858,20 +845,20 @@ class isodate():
             ret = self.isoformat(representation=WEEK, basic=basic, expanded=expanded)
         else:
             raise ValueError("Unknown format code '{0}' for object of type 'isodate'.".format(ftype))
-        
+
         if mo.group('precision') is not None:
             precision = int(mo.group('precision'))
             if len(ret) > precision:
                 ret = ret[:precision]
-        
+
         if mo.group('width') is not None:
             align = mo.group('align')
             fill = mo.group('fill')
             width = int(mo.group('width')) - len(ret)
-            
+
             if fill is None:
                 fill = ' '
-            
+
             if width > 0:
                 if align == '<':
                     ret = ret + fill * width
@@ -884,61 +871,61 @@ class isodate():
                     ret = fill * l + ret + fill * r
                 elif align == '=' or mo.group("fill0") is not None:
                     raise ValueError("'=' alignment not allowed in isodate format specification.")
-        
+
         return ret
-    
+
     def __eq__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) == 0
-    
+
     def __ne__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) != 0
-    
+
     def __lt__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) < 0
-    
+
     def __le__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) <= 0
-    
+
     def __gt__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) > 0
-    
+
     def __ge__(self, other):
         if not self.__comparable(other):
             return NotImplemented
         return self.__cmp(other) >= 0
-    
+
     def __comparable(self, other):
         return (isinstance(other, isodate) or
             isinstance(other, datetime.date) or
             isinstance(other, datetime.datetime))
-    
+
     def __cmp(self, other):
         return self.toordinal() - other.toordinal()
-    
+
     def __hash__(self):
         return hash(bytes(self))
-    
+
     def __int__(self):
         return self.__ordinal
-    
+
     def __add__(self, other):
         if isinstance(other, datetime.timedelta):
             o = self.toordinal() + other.days
             return isodate.fromordinal(o)
         return NotImplemented
-    
+
     __radd__ = __add__
-    
+
     def __sub__(self, other):
         if isinstance(other, datetime.timedelta):
             return self + datetime.timedelta(-other.days)
@@ -947,10 +934,10 @@ class isodate():
             days2 = other.toordinal()
             return datetime.timedelta(days=(days1 - days2))
         return NotImplemented
-    
+
     def __getstate__(self):
         return bytes(self)
-    
+
     def __setstate__(self, state):
         if len(state) < 5:
             raise TypeError("Not enough arguments.")
@@ -967,11 +954,11 @@ class isodate():
             expanded=expanded, century=state[3], year=state[2],
             month=state[1], dayofmonth=state[0])
         self.iso_implied = None
-    
+
     @property
     def iso_implied(self):
         return self.__implied
-    
+
     @iso_implied.setter
     def iso_implied(self, value):
         if value is None:
@@ -996,7 +983,7 @@ class isodate():
             value = isodate.fromtimestamp(time.mktime(tuple(value.values)))
         else:
             isodate.parse_iso(str(value))
-        
+
         self.__implied = value
         if self.__implied:
             # Set all implied values based on the class documentation
@@ -1032,13 +1019,13 @@ class isodate():
             self.__weekyearofdec = self.__orig_weekyearofdec
             self.__weekofyear = self.__orig_weekofyear
             self.__dayofweek = self.__orig_dayofweek
-        
+
         yby = self.__expanded * 10000 + self.__century * 100 + self.__year - 1
         dby = yby * 365 + yby // 4 - yby // 100 + yby // 400
         self.__ordinal = dby + self.__dayofyear
         self.__iso_leap_year = self.is_leap_year(self.__expanded, self.__century, self.__year)
         self.__bytes = None
-        
+
         # Validate all values for consistency
         validate = [
             "expanded", "century", "year",
@@ -1062,55 +1049,55 @@ class isodate():
                 #print(self.__weekofyear, self.__orig_weekofyear)
                 #print(self.__dayofweek, self.__orig_dayofweek)
                 raise ValueError("Inconsistent arguments to isodate for {0}.".format(name))
-    
+
     @property
     def iso_leap_year(self):
         return self.__iso_leap_year
-    
+
     @property
     def iso_expanded(self):
         return self.__expanded
-    
+
     @property
     def iso_century(self):
         return self.__century
-    
+
     @property
     def iso_year(self):
         return self.__year
-    
+
     @property
     def iso_month(self):
         return self.__month
-    
+
     @property
     def iso_dayofmonth(self):
         return self.__dayofmonth
-    
+
     @property
     def iso_dayofyear(self):
         return self.__dayofyear
-    
+
     @property
     def iso_weekcentury(self):
         return self.__weekcentury
-    
+
     @property
     def iso_weekdecade(self):
         return self.__weekdecade
-    
+
     @property
     def iso_weekyearofdec(self):
         return self.__weekyearofdec
-    
+
     @property
     def iso_weekofyear(self):
         return self.__weekofyear
-    
+
     @property
     def iso_dayofweek(self):
         return self.__dayofweek
-    
+
     #The following is a binary coded key that follows the following pattern:
     # - iso_expanded
     # - iso_century
@@ -1180,19 +1167,19 @@ class isodate():
     def isoformat(self, representation=CALENDAR, basic=False,
                 reduced=None, truncated=None, expanded=False):
         """Return a string representing the date in ISO 8601 format.
-        
+
         `representation` may be `CALENDAR` (default), `ORDINAL`, or
         `WEEK` which will determine if the representation is a §5.2.1
         Calendar date, §5.2.2 Ordinal date, or §5.2.3 Week date. If
         this is `WEEK` and `year_of_decade` is True then §5.2.3.3 (c)
         or (d) will be selected (note: `year_of_decade` with `CALENDAR`
         or `ORDINAL` will result in an exception).
-        
+
         If `basic` is true then the [-](hypen) is ommitted from the
         representation, otherwise (default) it will separate the parts
         of the representation. If there is no extended format then this
         will be asserted to be true.
-        
+
         For reduced precision set `reduced` to the last part to include
         (`None` means no reduced precision) based on the representation
         desired:
@@ -1201,66 +1188,66 @@ class isodate():
                 - `MONTH` for a specific month §5.2.1.2 (a).
                 - `YEAR` for a specific year §5.2.1.2 (b).
                 - `CENTURY` for a specific century §5.2.1.2 (c).
-            
+
             - `ORDINAL`
                 - `DAYOFYEAR` for a complete representation §5.2.2.1.
                 - `YEAR` for a specific year §5.2.1.2 (b).
                 - `CENTURY` for a specific century §5.2.1.2 (c).
-            
+
             - `WEEK`
                 - `DAYOFWEEK` for a complete representation §5.2.3.1.
                 - `WEEKOFYEAR` for a specific week §5.2.3.2 (a).
                 - `YEAR` for a specific year §5.2.1.2 (b).
                 - `CENTURY` for a specific century §5.2.1.2 (c).
-        
+
         For truncated representations set `truncated` to the first part
         to include (`None` means no truncation) based on the representation
         desired:
             - `CALENDAR`
                 - `CENTURY` for a complete representation §5.2.1.1.
-                
+
                 - `YEAR` for an implied century §5.2.1.3 (a).
                     - `reduced=MONTH` for specific year and month
                       §5.2.1.3 (b)
-                    
+
                     - `reduced=YEAR` for specific year §5.2.1.3 (c)
-                
+
                 - `MONTH` for an implied year §5.2.1.3 (d).
                     - `reduced=MONTH` for specific month §5.2.1.3 (e)
-                
+
                 - `DAYOFMONTH` for an implied month §5.2.1.3 (f).
-            
+
             - `ORDINAL`
                 - `CENTURY` for a complete representation §5.2.2.1.
                 - `YEAR` for an implied century §5.2.2.2 (a).
                 - `DAYOFYEAR` for an implied year §5.2.2.2 (b).
-            
+
             - `WEEK`
                 - `CENTURY` for a complete representation §5.2.3.1.
-            
+
                 - `DECADE` for year, week, and day in an implied
                   century §5.2.3.3 (a).
                     - `reduced=WEEKOFYEAR` for year and week in an
                       implied century §5.2.3.3 (b)
-            
+
                 - `YEAR` for year of implied decade, week, and day
                   §5.2.3.3 (c).
                     - `reduced=WEEKOFYEAR` for year of implied decade
                       and week §5.2.3.3 (d)
-                
+
                 - `WEEKOFYEAR` for week and day of implied year §5.2.3.3 (e).
                     - `reduced=WEEKOFYEAR` for week only of implied
                       year §5.2.3.3 (f)
-            
+
                 - `DAYOFWEEK` for day of an implied week §5.2.3.3 (g).
-        
+
         Expanded representations will only be created if `expanded` is
         set to true. Note that if `iso_expanded` is 0 then the
         representation will have a '+0' before the century even though
         the ISO 8601 standard allows for the 0 to be missing. No truncation
         is allowed in an expanded representation, if both expanded and
         truncated are selected an error will be raised.
-        
+
         This will duck type to `datetime.date.isoformat()` if called with
         no arguments.
         """
@@ -1268,7 +1255,7 @@ class isodate():
             reduced = (0b1111111111, 0b1111111111)
         if truncated is None:
             truncated = (0b1111111111, 0b1111111111)
-        
+
         code = representation & reduced[0] & truncated[1]
         if not basic:
             code = code & 0b1111111110
@@ -1287,8 +1274,8 @@ class isodate():
             raise ValueError("Invalid ISO 8601 date representation.")
         fmt = self.code2fmt[code]
         return fmt.format(self)
-    
-    
+
+
     ###
     ### datetime.date duck type methods
     ###
@@ -1298,15 +1285,15 @@ class isodate():
             return self.iso_expanded * 10000 + self.iso_century * 100 + self.iso_year
         else:
             return self.iso_century * 100 + self.iso_year
-    
+
     @property
     def month(self):
         return self.iso_month
-    
+
     @property
     def day(self):
         return self.iso_dayofmonth
-    
+
     def replace(self, year=None, month=None, day=None):
         e = self.iso_expanded
         c = self.iso_century
@@ -1323,7 +1310,7 @@ class isodate():
         fields = self.compute_all_fields(expanded=e, century=c, year=y,
                 month=m, dayofmonth=d)
         return isodate(*fields)
-    
+
     def timetuple(self):
         y = self.year
         m = self.month
@@ -1335,23 +1322,23 @@ class isodate():
         doy = self.iso_dayofyear
         dst = -1
         return time.struct_time((y, m, d, hh, mm, ss, wday, doy, dst))
-    
+
     def toordinal(self):
         return self.__ordinal
-    
+
     def weekday(self):
         return self.__dayofweek - 1
-    
+
     def isoweekday(self):
         return self.__dayofweek
-    
+
     def isocalendar(self):
         return (self.__weekcentury * 100 + self.__weekdecade * 10 + self.__weekyearofdec,
             self.__weekofyear, self.__dayofweek)
-        
+
     def ctime(self):
         return self.strftime("%a %b %d %H:%M:%S %Y")
-    
+
     def strftime(self, format):
         return time.strftime(format, self.timetuple())
 

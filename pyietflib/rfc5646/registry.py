@@ -2,21 +2,8 @@
 # -*- coding: UTF-8 -*-
 """`RFC 5646 IANA Language Subtag Registry
 <http://tools.ietf.org/html/rfc5646#section-3>`_ reader."""
-__version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
-__license__ = """
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+from .__meta__ import (__version__, __author__, __license__)
 
 import sys
 if sys.version_info < (3, 2):
@@ -42,7 +29,7 @@ class LanguageRegistry():
         self.variants = {}
         self.grandfathered = {}
         self.redundant = {}
-        
+
         with open(path, encoding='UTF-8') as stream:
             line = stream.readline()
             while line and line.rstrip() != '%%':
@@ -64,7 +51,7 @@ class LanguageRegistry():
                     lines.append(line.strip())
                 line = stream.readline()
             self.__addrecord(LanguageRegistryRecord(lines))
-    
+
     def __addrecord(self, record):
         try:
             if record.type == 'language':
@@ -89,13 +76,13 @@ class LanguageRegistry():
 class LanguageRegistryRecord():
     """Contains a single record for an IANA Language Subtag Registry
     which may be parsed from list of `lines`."""
-    
+
     field_re = re.compile(r'''^
             (?P<fieldname>[a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9])
             \s*:\s*
             (?P<fieldbody>.+)
         $''', flags=re.VERBOSE)
-    
+
     def __init__(self, lines):
         for line in lines:
             mo = LanguageRegistryRecord.field_re.match(line)
@@ -105,7 +92,7 @@ class LanguageRegistryRecord():
             body = mo.group('fieldbody').strip()
             if not body.isprintable():
                 raise ValueError("Langauge registry field `{0}` body contains unprintable characters".format(line, linenumber))
-            
+
             if name == 'Type':
                 self.type = body
             elif name == 'Subtag':
@@ -119,33 +106,33 @@ class LanguageRegistryRecord():
                     self.added = datetime.strptime(body, '%Y-%m-%d')
                 except ValueError as err:
                     raise ValueError("Langauge registry added field `{0}` date is not ISO 8601 date.".format(line))
-            
+
             elif name == 'Deprecated':
                 try:
                     self.deprecated = datetime.strptime(body, '%Y-%m-%d')
                 except ValueError as err:
                     raise ValueError("Langauge registry deprecated field `{0}` date is not ISO 8601 date.".format(line))
-            
+
             elif name == 'Suppress-Script':     # language type
                 self.suppress_script = body
-            
+
             elif name == 'Macrolanguage':       # language type
                 self.macro_language = body
-            
+
             elif name == 'Scope':               # language type
                 self.scope = body
-            
+
             elif name == 'Prefix':              # variant type
                 if not hasattr(self, 'prefix'):
                     self.prefix = []
                 self.prefix.append(body)
-                
+
             elif name == 'Comments':            # variant type
                 self.comments = body
-            
+
             elif name == 'Preferred-Value':     # grandfathered type
                 self.preferred_value = body
-            
+
             else:
                 print('field', name)
                 logging.warning("Unknown field name %s.", name)
@@ -160,4 +147,4 @@ def registry():
         path = os.path.join(os.path.dirname(__file__), 'language-subtag-registry.txt')
         default_registry = LanguageRegistry(path)
     return default_registry
-    
+

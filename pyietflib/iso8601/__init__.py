@@ -4,21 +4,8 @@
 times <http://www.iso.org/iso/catalogue_detail?csnumber=40874>`_ parsing
 and formatting.
 """
-__version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
-__license__ = """
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+from .__meta__ import (__version__, __author__, __license__)
 
 from .time import *
 from .date import *
@@ -37,40 +24,40 @@ __all__ = ['isodate', 'isotime', 'isodatetime',
 def parse_iso8601(value):
     """This will parse an ISO 8601 arbitrary representation and return
     a list of the component parts.
-    
+
     All time representations must have the time designator [T] before
     the time starts. This is in accordance with ISO 8601 §5.3.1.5
     where if time is not explicitly specified then the designator is
     required.
-    
+
     Examples
     --------
     19660829
         This will return an isodate object.
-    
+
     1966-08-29
         This will return an isodate object.
-    
+
     T05:11:23
         This will return an isotime object.
-        
+
     T051123
         This will return an isotime object.
-    
+
     051123
         This will return an isodate object even though it is a valid
         basic format complete representation of time because the
         time designator [T] is missing.
-    
+
     19660829T052436
         This will return an isodatetime object.
-    
+
     P1Y2M15DT12H30M0S
         This will return an isoduration object.
-    
+
     19660829/P1Y2M15DT12H30M0S
         This will return an isodate object and an isoduration object.
-    
+
     P1Y2M15DT12H30M0S/19660829
         This will return an isoduration object and an isodate object.
     """

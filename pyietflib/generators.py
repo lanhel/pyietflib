@@ -1,21 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """Collection of all pyietflib generator creation methods."""
-__version__ = '1.0'
 __copyright__ = """Copyright 2011 Lance Finn Helsten (helsten@acm.org)"""
-__license__ = """
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+from .__meta__ import (__version__, __author__, __license__)
 
 import sys
 if sys.version_info < (3, 2):
@@ -63,7 +50,7 @@ def media_type_generator(mediatype, stream):
     level media-type objects. For example if the stream is an RFC 6350
     vCard stream then this will yield a `pyietflib.rfc6350.vCard` object
     each time the generator is called.
-    
+
     Generally the stream should be a byte stream to allow the generator
     itself to determine how to process it based on the given media-type.
     For instance all RFC 6350 streams must be UTF-8 encoded (see RFC 6350
@@ -74,7 +61,7 @@ def media_type_generator(mediatype, stream):
     if mediatype not in registered_media_types:
         load_module_for_media_type(mediatype, globals(), locals())
     return registered_media_types[mediatype](stream)
-    
+
 
 
 
